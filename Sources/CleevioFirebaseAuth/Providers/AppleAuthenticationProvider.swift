@@ -52,13 +52,12 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
         
         let nonce = randomNonceString()
         request.nonce = sha256(nonce)
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            let authorizationController = ASAuthorizationController(authorizationRequests: [request])
-            let authorizationDelegate = AppleAuthorizationDelegate(controller: authorizationController)
 
-            var continuationResumed = false
-            
+        let authorizationController = ASAuthorizationController(authorizationRequests: [request])
+        let authorizationDelegate = AppleAuthorizationDelegate(controller: authorizationController)
+        var continuationResumed = false
+
+        return try await withCheckedThrowingContinuation { continuation in
             authorizationDelegate.completion = { result in
                 guard !continuationResumed else { return }
                 continuationResumed = true
