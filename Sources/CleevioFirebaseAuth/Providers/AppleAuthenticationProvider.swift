@@ -56,12 +56,22 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
         return try await withCheckedThrowingContinuation { continuation in
             let authorizationController = ASAuthorizationController(authorizationRequests: [request])
             let authorizationDelegate = AppleAuthorizationDelegate(controller: authorizationController)
-            authorizationDelegate.didCompleteWithAuthorization = {
-                var credential = $0
-                credential.nonce = nonce
-                continuation.resume(returning: credential)
+
+            var continuationResumed = false
+            
+            authorizationDelegate.completion = { result in
+                guard !continuationResumed else { return }
+                continuationResumed = true
+
+                switch result {
+                case let .failure(error):
+                    continuation.resume(throwing: error)
+                case var .success(credential):
+                    credential.nonce = nonce
+                    continuation.resume(returning: credential)
+                }
             }
-            authorizationDelegate.didCompleteWithError = continuation.resume
+
             authorizationController.performRequests()
         }
     }
@@ -86,30 +96,29 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
   
     /// A private delegate class for handling Apple authorization.
     private final class AppleAuthorizationDelegate: NSObject, ASAuthorizationControllerDelegate {
-        var didCompleteWithAuthorization: (Credential) -> Void = { _ in }
-        var didCompleteWithError: (Error) -> Void = { _ in }
-        
+        var completion: (Result<Credential, Error>) -> Void = { _ in }
+
         init(controller: ASAuthorizationController) {
             super.init()
             controller.delegate = self
         }
         
         func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
-            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else { return didCompleteWithError(AuthenticatorError.appleIDCredentialNotFound)  }
+            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else { return completion(.failure(AuthenticatorError.appleIDCredentialNotFound))  }
             guard
                 let appleIDToken = appleIDCredential.identityToken,
                 let idToken = String(data: appleIDToken, encoding: .utf8)
-            else { return didCompleteWithError(AuthenticatorError.identityTokenNotFound) }
+            else { return completion(.failure(AuthenticatorError.identityTokenNotFound)) }
             guard
                 let appleAuthCode = appleIDCredential.authorizationCode,
                 let authCode = String(data: appleAuthCode, encoding: .utf8)
-            else { return didCompleteWithError(AuthenticatorError.authCodeNotFound) }
+            else { return completion(.failure(AuthenticatorError.authCodeNotFound)) }
             
-            didCompleteWithAuthorization(Credential(idToken: idToken, authCode: authCode, fullName: appleIDCredential.fullName))
+            completion(.success(Credential(idToken: idToken, authCode: authCode, fullName: appleIDCredential.fullName)))
         }
         
         func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-            didCompleteWithError(error)
+            completion(.failure(error))
         }
     }
 }
