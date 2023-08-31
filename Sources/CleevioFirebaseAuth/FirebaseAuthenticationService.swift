@@ -40,6 +40,11 @@ public protocol FirebaseAuthenticationServiceType {
     /// - Returns: A string representing the user's authentication token.
     func token() async throws -> String?
 
+#if os(iOS)
+    /// Adds APNS token to a user
+    static func setAPNSToken(_ token: Data, type: AuthAPNSTokenType)
+#endif
+
     /// The currently authenticated user, if available.
     var user: FirebaseAuth.User? { get }
 }
@@ -74,4 +79,10 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
     public func token() async throws -> String? {
         try await user?.getIDToken()
     }
+
+    #if os(iOS)
+    public static func setAPNSToken(_ token: Data, type: AuthAPNSTokenType) {
+        Auth.auth().setAPNSToken(token, type: type)
+    }
+    #endif
 }
