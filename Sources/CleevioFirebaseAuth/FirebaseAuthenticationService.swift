@@ -75,7 +75,7 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
     }
 
     let auth: Auth
-    public var user: FirebaseAuth.User? { Auth.auth().currentUser }
+    public var user: FirebaseAuth.User? { auth.currentUser }
     
     public func signInAnonymously() async throws {
         try await auth.signInAnonymously()
