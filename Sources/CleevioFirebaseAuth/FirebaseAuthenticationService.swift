@@ -35,16 +35,16 @@ public protocol FirebaseAuthenticationServiceType {
 
     /// Method to sign up with email and password credentials. Throws an error if user already exists
     /// - Note: Use `signInOrSignUp(with:)` with provider if you want to sign in or sign up using other than credential providers or want to sign in if user already exists
-    func signUp(withEmail email: String, password: String) async throws
+    func signUp(withEmail email: String, password: String) async throws -> AuthDataResult
 
     /// Sign in using the specified authentication provider.
     /// Sets presentingViewController on AuthenticationProvider conforming to NeedsPresentingViewController if the provider's presentingViewController is nil
     /// - Parameter provider: An authentication provider.
-    func signIn(with provider: some AuthenticationProvider) async throws
+    func signIn(with provider: some AuthenticationProvider) async throws -> AuthDataResult
 
     /// Sign in using the specified authentication provider.
     /// If sign in fails on AuthErrorCode.userNotFound exception and the provider is PasswordAuthenticationProvider, method should try to create user with specified email and password.
-    func signInOrSignUp(with provider: some AuthenticationProvider) async throws
+    func signInOrSignUp(with provider: some AuthenticationProvider) async throws -> AuthDataResult
 
     /// Sign out the current user.
     func signOut() async throws
@@ -94,30 +94,33 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
         try await auth.signInAnonymously()
     }
     
-    public func signIn(with provider: some AuthenticationProvider) async throws {
+    @discardableResult
+    public func signIn(with provider: some AuthenticationProvider) async throws -> AuthDataResult {
         if let provider = provider as? NeedsPresentingViewController, provider.presentingViewController == nil {
             provider.presentingViewController = presentingViewController()
         }
 
         let credential = try await provider.credential()
         if let user {
-            try await user.link(with: credential.firebaseCredential)
+            return try await user.link(with: credential.firebaseCredential)
         } else {
-            try await auth.signIn(with: credential.firebaseCredential)
+            return try await auth.signIn(with: credential.firebaseCredential)
         }
     }
 
-    public func signUp(withEmail email: String, password: String) async throws {
+    @discardableResult
+    public func signUp(withEmail email: String, password: String) async throws -> AuthDataResult {
         try await auth.createUser(withEmail: email, password: password)
     }
 
-    public func signInOrSignUp(with provider: some AuthenticationProvider) async throws {
+    @discardableResult
+    public func signInOrSignUp(with provider: some AuthenticationProvider) async throws -> AuthDataResult {
         do {
-            try await signIn(with: provider)
+            return try await signIn(with: provider)
         } catch AuthErrorCode.userNotFound {
             if let provider = provider as? PasswordAuthenticationProvider {
                 let credentials = try await provider.credential()
-                try await signUp(withEmail: credentials.email, password: credentials.password)
+                return try await signUp(withEmail: credentials.email, password: credentials.password)
             } else {
                 throw AuthErrorCode(.userNotFound)
             }
