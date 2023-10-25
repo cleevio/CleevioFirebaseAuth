@@ -20,7 +20,7 @@ public typealias PlatformViewController = NSWindow
 #endif
 
 /// A class providing Google authentication services conforming to `AuthenticationProvider`.
-public final class GoogleAuthenticationProvider: AuthenticationProvider {
+public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPresentingViewController {
     /// The authentication credential structure for Google authentication.
     public struct Credential {
         /// The ID token obtained from Google authentication.
@@ -37,20 +37,18 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider {
     /// Possible errors during Google authentication.
     public enum AuthenticatorError: Error {
         case firebaseClientIDNotFound
-        case presentingControllerNotProvided
+        case presentingViewControllerNotProvided
         case idTokenNotFound
     }
 
     static let gidInstance = GIDSignIn.sharedInstance
     
     /// The view controller used for presenting Google authentication UI.
-    private weak var presentingController: PlatformViewController?
-    
+    public weak var presentingViewController: PlatformViewController?
+
     /// Initializes a `GoogleAuthenticationProvider` with a presenting view controller.
     /// - Parameter presentingController: The view controller for presenting Google authentication UI.
-    public init(presentingController: PlatformViewController) {
-        self.presentingController = presentingController
-    }
+    public init() { }
     
     /// Retrieves the Google authentication credential asynchronously.
     /// - Returns: A `Credential` instance containing ID token and access token.
@@ -58,13 +56,13 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider {
     @MainActor
     public func credential() async throws -> Credential {
         guard let clientID = FirebaseApp.app()?.options.clientID else { throw AuthenticatorError.firebaseClientIDNotFound }
-        guard let presentingController else { throw AuthenticatorError.presentingControllerNotProvided }
+        guard let presentingViewController else { throw AuthenticatorError.presentingViewControllerNotProvided }
         
         let configuration = GIDConfiguration(clientID: clientID)
         
         Self.gidInstance.configuration = configuration
         
-        let signInResult = try await Self.gidInstance.signIn(withPresenting: presentingController)
+        let signInResult = try await Self.gidInstance.signIn(withPresenting: presentingViewController)
         let user = signInResult.user
         
         guard let idToken = user.idToken?.tokenString else { throw AuthenticatorError.idTokenNotFound }

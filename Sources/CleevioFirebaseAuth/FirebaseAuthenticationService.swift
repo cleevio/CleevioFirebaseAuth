@@ -7,7 +7,6 @@
 
 import Foundation
 import FirebaseAuth
-import CleevioAuthentication
 
 /// A protocol for providing Firebase credentials.
 public protocol FirebaseCredentialProvider {
@@ -24,12 +23,20 @@ public protocol AuthenticationProvider {
     func credential() async throws -> Credential
 }
 
+/// A protocol for authentication providers.
+public protocol NeedsPresentingViewController {
+    var presentingViewController: PlatformViewController? { get nonmutating set}
+}
+
 /// A protocol defining the interface for Firebase authentication services.
 public protocol FirebaseAuthenticationServiceType {
+    var presentingViewController: () -> (PlatformViewController?) { get nonmutating set }
+
     /// Sign in anonymously.
     func signInAnonymously() async throws
 
     /// Sign in using the specified authentication provider.
+    /// Sets presentingViewController on AuthenticationProvider conforming to NeedsPresentingViewController if the provider's presentingViewController is nil
     /// - Parameter provider: An authentication provider.
     func signIn(with provider: some AuthenticationProvider) async throws
 
@@ -76,12 +83,17 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
 
     let auth: Auth
     public var user: FirebaseAuth.User? { auth.currentUser }
+    public var presentingViewController: () -> (PlatformViewController?) = { nil }
     
     public func signInAnonymously() async throws {
         try await auth.signInAnonymously()
     }
     
     public func signIn(with provider: some AuthenticationProvider) async throws {
+        if let provider = provider as? NeedsPresentingViewController, provider.presentingViewController == nil {
+            provider.presentingViewController = presentingViewController()
+        }
+
         let credential = try await provider.credential()
         if let user {
             try await user.link(with: credential.firebaseCredential)
