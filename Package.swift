@@ -23,6 +23,9 @@ let package = Package(
         .library(
             name: "CleevioFirebaseAuth",
             targets: ["CleevioFirebaseAuth"]),
+        .library(
+            name: "CleevioFirebaseAuthCleevioAuthentication",
+            targets: ["CleevioFirebaseAuthCleevioAuthentication"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-algorithms", .upToNextMajor(from: "1.0.0")),
@@ -36,11 +39,17 @@ let package = Package(
         .target(
             name: "CleevioFirebaseAuth",
             dependencies: [
-               .product(name: "CleevioAPI", package: "cleevioapi"),
-               .product(name: "CleevioAuthentication", package: "cleevioapi"),
                .product(name: "Algorithms", package: "swift-algorithms"),
                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
                .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
+            ],
+            swiftSettings: swiftSettings),
+        .target(
+            name: "CleevioFirebaseAuthCleevioAuthentication",
+            dependencies: [
+                "CleevioFirebaseAuth",
+               .product(name: "CleevioAPI", package: "cleevioapi"),
+               .product(name: "CleevioAuthentication", package: "cleevioapi"),
             ],
             swiftSettings: swiftSettings),
         .testTarget(
