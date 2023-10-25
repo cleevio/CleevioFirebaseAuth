@@ -39,7 +39,7 @@ public protocol FirebaseAuthenticationServiceType {
     func signIn(with provider: some AuthenticationProvider) async throws
 
     /// Sign in using the specified authentication provider.
-    /// If sign in fails on AuthErrorCode.userNotFound exception and the provider is PasswordAuthenticationProvider, method tries to create user with specified email and password.
+    /// If sign in fails on AuthErrorCode.userNotFound exception and the provider is PasswordAuthenticationProvider, method should try to create user with specified email and password.
     func signInOrSignUp(with provider: some AuthenticationProvider) async throws
 
     /// Sign out the current user.
@@ -70,6 +70,7 @@ public protocol FirebaseAuthenticationServiceType {
     /// The currently authenticated user, if available.
     var user: FirebaseAuth.User? { get }
 
+    /// Used by signIn method that sets presentingViewController on AuthenticationProvider conforming to NeedsPresentingViewController if the provider's presentingViewController is nil
     var presentingViewController: () -> (PlatformViewController?) { get nonmutating set }
 }
 
