@@ -33,6 +33,10 @@ public protocol FirebaseAuthenticationServiceType {
     /// Sign in anonymously.
     func signInAnonymously() async throws
 
+    /// Method to sign up with email and password credentials. Throws an error if user already exists
+    /// - Note: Use `signInOrSignUp(with:)` with provider if you want to sign in or sign up using other than credential providers or want to sign in if user already exists
+    func signUp(withEmail email: String, password: String) async throws
+
     /// Sign in using the specified authentication provider.
     /// Sets presentingViewController on AuthenticationProvider conforming to NeedsPresentingViewController if the provider's presentingViewController is nil
     /// - Parameter provider: An authentication provider.
@@ -103,13 +107,17 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
         }
     }
 
+    public func signUp(withEmail email: String, password: String) async throws {
+        try await auth.createUser(withEmail: email, password: password)
+    }
+
     public func signInOrSignUp(with provider: some AuthenticationProvider) async throws {
         do {
             try await signIn(with: provider)
         } catch AuthErrorCode.userNotFound {
             if let provider = provider as? PasswordAuthenticationProvider {
                 let credentials = try await provider.credential()
-                try await auth.createUser(withEmail: credentials.email, password: credentials.password)
+                try await signUp(withEmail: credentials.email, password: credentials.password)
             } else {
                 throw AuthErrorCode(.userNotFound)
             }
