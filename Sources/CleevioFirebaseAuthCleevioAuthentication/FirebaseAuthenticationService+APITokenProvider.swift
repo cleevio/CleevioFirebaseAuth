@@ -1,12 +1,13 @@
 //
-//  File.swift
-//  
+//  FirebaseAuthenticationService+APITokenProvider.swift
+//
 //
 //  Created by Lukáš Valenta on 19.08.2023.
 //
 
 import Foundation
 import CleevioAuthentication
+import CleevioFirebaseAuth
 
 extension FirebaseAuthenticationService: CleevioAuthentication.APITokenProvider {
     /// Retrieves the API token associated with the currently logged-in user.
