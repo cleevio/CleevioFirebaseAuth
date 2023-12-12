@@ -94,41 +94,42 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
     }
     
     @discardableResult
-    public func signIn(with provider: some AuthenticationProvider) async throws -> AuthDataResult {
+    public func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthDataResult {
         if let provider = provider as? NeedsPresentingViewController, provider.presentingViewController == nil {
             provider.presentingViewController = presentingViewController()
         }
 
+        func handleErrorCode(error: AuthErrorCode, credential: Provider.Credential) async throws -> AuthDataResult {
+            if let provider = provider as? PasswordAuthenticationProvider,
+               let credential = credential as? PasswordAuthenticationProvider.Credential,
+               error == AuthErrorCode(.userNotFound) && provider.options.contains(.signUpOnUserNotFound) || error.code == AuthErrorCode.internalError && provider.options.contains(.signUpOnInternalError) {
+                return try await signUp(withEmail: credential.email, password: credential.password)
+            }
+
+            throw error
+        }
+
         let credential = try await provider.credential()
+
+        do {
+            return try await signIn(with: credential.firebaseCredential)
+        } catch let error as AuthErrorCode {
+            return try await handleErrorCode(error: error, credential: credential)
+        }
+    }
+
+    @discardableResult
+    public func signIn(with firebaseCredential: AuthCredential) async throws -> AuthDataResult {
         if let user {
-            return try await user.link(with: credential.firebaseCredential)
+            return try await user.link(with: firebaseCredential)
         } else {
-            return try await auth.signIn(with: credential.firebaseCredential)
+            return try await auth.signIn(with: firebaseCredential)
         }
     }
 
     @discardableResult
     public func signUp(withEmail email: String, password: String) async throws -> AuthDataResult {
         try await auth.createUser(withEmail: email, password: password)
-    }
-
-    @discardableResult
-    public func signInOrSignUp(with provider: some AuthenticationProvider) async throws -> AuthDataResult {
-        func handleErrorCode(error: AuthErrorCode) async throws -> AuthDataResult {
-            if let provider = provider as? PasswordAuthenticationProvider,
-               error == AuthErrorCode(.userNotFound) && provider.options.contains(.signUpOnUserNotFound) || error.code == AuthErrorCode.internalError && provider.options.contains(.signUpOnInternalError) {
-                let credentials = try await provider.credential()
-                return try await signUp(withEmail: credentials.email, password: credentials.password)
-            }
-
-            throw error
-        }
-
-        do {
-            return try await signIn(with: provider)
-        } catch let error as AuthErrorCode {
-            return try await handleErrorCode(error: error)
-        }
     }
     
     public func signOut() async throws {
