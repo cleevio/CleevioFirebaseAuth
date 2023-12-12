@@ -45,9 +45,9 @@ public protocol FirebaseAuthenticationServiceType {
     func signIn(with provider: some AuthenticationProvider) async throws -> AuthDataResult
 
     /// Sign in using the specified authentication provider.
-    /// If sign in fails on AuthErrorCode.userNotFound exception and the provider is PasswordAuthenticationProvider, method should try to create user with specified email and password, same applies for different options set of EmailPasswordSignInOrSignUpOptions
+    /// If sign in fails on AuthErrorCode.userNotFound exception and the provider is PasswordAuthenticationProvider, method should try to create user with specified email and password, same applies for different options set of PasswordAuthenticationProvider.SignInOrSignUpOptions
     @discardableResult
-    func signInOrSignUp(with provider: some AuthenticationProvider, options: EmailPasswordSignInOrSignUpOptions) async throws -> AuthDataResult
+    func signInOrSignUp(with provider: some AuthenticationProvider, options: PasswordAuthenticationProvider.SignInOrSignUpOptions) async throws -> AuthDataResult
 
     /// Sign out the current user.
     func signOut() async throws
@@ -91,17 +91,6 @@ public extension FirebaseAuthenticationServiceType {
     }
 }
 
-public struct EmailPasswordSignInOrSignUpOptions: OptionSet {
-    public let rawValue: UInt
-
-    public init(rawValue: UInt) {
-        self.rawValue = rawValue
-    }
-
-    /// Needed with enumeration protection turned on as Firebase returns invalid credentials so that attacker cannot determine if user exists
-    public static let createUserOnInvalidCredentials = Self(rawValue: 1 << 0)
-}
-
 /// A class providing Firebase authentication services.
 open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
     /// Initialize the authentication service with an optional tenant ID.
@@ -138,12 +127,12 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
     }
 
     @discardableResult
-    public func signInOrSignUp(with provider: some AuthenticationProvider, options: EmailPasswordSignInOrSignUpOptions) async throws -> AuthDataResult {
+    public func signInOrSignUp(with provider: some AuthenticationProvider, options: PasswordAuthenticationProvider.SignInOrSignUpOptions) async throws -> AuthDataResult {
         do {
             return try await signIn(with: provider)
         } catch AuthErrorCode.userNotFound {
             return try await signUpCastedCredentialToPasswordAuthenticationProviderOrThrowError(provider: provider, error: AuthErrorCode(.userNotFound))
-        } catch AuthErrorCode.invalidCredential where options.contains(.createUserOnInvalidCredentials) {
+        } catch AuthErrorCode.internalError where options.contains(.createUserOnInternalError) {
             return try await signUpCastedCredentialToPasswordAuthenticationProviderOrThrowError(provider: provider, error: AuthErrorCode(.invalidCredential))
         }
     }

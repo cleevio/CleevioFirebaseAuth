@@ -20,6 +20,17 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
             self.password = password
         }
     }
+
+    public struct SignInOrSignUpOptions: OptionSet {
+        public let rawValue: UInt
+
+        public init(rawValue: UInt) {
+            self.rawValue = rawValue
+        }
+
+        /// Needed with enumeration protection turned on as Firebase returns internal error so that attacker cannot determine if user exists
+        public static let createUserOnInternalError = Self(rawValue: 1 << 0)
+    }
     
     public let email: String
     public let password: String
