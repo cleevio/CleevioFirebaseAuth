@@ -21,27 +21,31 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
         }
     }
 
-    public struct SignInOrSignUpOptions: OptionSet {
+    public struct SignInOptions: OptionSet {
         public let rawValue: UInt
 
         public init(rawValue: UInt) {
             self.rawValue = rawValue
         }
 
+        public static let signUpOnUserNotFound = Self(rawValue: 1 << 0)
+
         /// Needed with enumeration protection turned on as Firebase returns internal error so that attacker cannot determine if user exists
-        public static let createUserOnInternalError = Self(rawValue: 1 << 0)
+        public static let signUpOnInternalError = Self(rawValue: 1 << 1)
     }
     
     public let email: String
     public let password: String
+    public let options: SignInOptions
 
     /// Initializes a `PasswordAuthenticationProvider` with the provided email and password.
     /// - Parameters:
     ///   - email: The email for authentication.
     ///   - password: The password for authentication.
-    public init(email: String, password: String) {
+    public init(email: String, password: String, options: SignInOptions = []) {
         self.email = email
         self.password = password
+        self.options = options
     }
     
     /// Retrieves the authentication credential asynchronously.
