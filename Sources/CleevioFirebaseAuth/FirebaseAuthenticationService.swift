@@ -102,7 +102,7 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
         func handleErrorCode(error: AuthErrorCode, credential: Provider.Credential) async throws -> AuthDataResult {
             if let provider = provider as? PasswordAuthenticationProvider,
                let credential = credential as? PasswordAuthenticationProvider.Credential,
-               error == AuthErrorCode(.userNotFound) && provider.options.contains(.signUpOnUserNotFound) || error.code == AuthErrorCode.internalError && provider.options.contains(.signUpOnInternalError) {
+               error.code == AuthErrorCode.userNotFound && provider.options.contains(.signUpOnUserNotFound) || error.code == AuthErrorCode.internalError && provider.options.contains(.signUpOnInternalError) {
                 return try await signUp(withEmail: credential.email, password: credential.password)
             }
 
