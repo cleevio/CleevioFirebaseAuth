@@ -16,7 +16,7 @@ public protocol FirebaseCredentialProvider {
 /// A protocol for authentication providers.
 public protocol AuthenticationProvider {
     /// The associated type of credentials conforming to `FirebaseCredentialProvider`.
-    associatedtype Credential: FirebaseCredentialProvider
+    associatedtype Credential
     
     /// Retrieve the authentication credential asynchronously.
     /// - Returns: An instance of `Credential`.
@@ -43,7 +43,7 @@ public protocol FirebaseAuthenticationServiceType {
     /// If sign in fails and provider is PasswordAuthenticationProvider, user is created calling signUp(withEmail:password) depending on PasswordAuthenticationProvider.SignInOptions
     /// - Parameter provider: An authentication provider.
     @discardableResult
-    func signIn(with provider: some AuthenticationProvider) async throws -> AuthDataResult
+    func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> (Provider.Credential, AuthDataResult) where Provider.Credential: FirebaseCredentialProvider
 
     /// Sign out the current user.
     func signOut() async throws
@@ -94,7 +94,7 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
     }
     
     @discardableResult
-    public func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthDataResult {
+    public func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> (Provider.Credential, AuthDataResult) where Provider.Credential: FirebaseCredentialProvider {
         if let provider = provider as? NeedsPresentingViewController, provider.presentingViewController == nil {
             provider.presentingViewController = presentingViewController()
         }
@@ -112,9 +112,9 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
         let credential = try await provider.credential()
 
         do {
-            return try await signIn(with: credential.firebaseCredential)
+            return (credential, try await signIn(with: credential.firebaseCredential))
         } catch let error as AuthErrorCode {
-            return try await handleErrorCode(error: error, credential: credential)
+            return (credential, try await handleErrorCode(error: error, credential: credential))
         }
     }
 
