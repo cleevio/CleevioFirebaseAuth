@@ -15,13 +15,16 @@ public protocol FirebaseCredentialProvider {
 
 /// A protocol for authentication providers.
 public protocol AuthenticationProvider {
-    /// The associated type of credentials conforming to `FirebaseCredentialProvider`.
+    /// The associated type of credentials.
     associatedtype Credential
     
     /// Retrieve the authentication credential asynchronously.
     /// - Returns: An instance of `Credential`.
     func credential() async throws -> Credential
 }
+
+/// A protocol for authentication providers providing Firebase credentials.
+public protocol FirebaseAuthenticationProvider: AuthenticationProvider where Credential: FirebaseCredentialProvider { }
 
 /// A protocol for types that need to have presentingViewController set.
 public protocol NeedsPresentingViewController {
