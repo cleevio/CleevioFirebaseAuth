@@ -128,3 +128,5 @@ extension AppleAuthenticationProvider.Credential: FirebaseCredentialProvider {
         OAuthProvider.appleCredential(withIDToken: idToken, rawNonce: nonce, fullName: fullName)
     }
 }
+
+extension AppleAuthenticationProvider: FirebaseAuthenticationProvider { }

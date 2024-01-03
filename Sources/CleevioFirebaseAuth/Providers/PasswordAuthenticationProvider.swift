@@ -61,3 +61,5 @@ extension PasswordAuthenticationProvider.Credential: FirebaseCredentialProvider 
         EmailAuthProvider.credential(withEmail: email, password: password)
     }
 }
+
+extension PasswordAuthenticationProvider: FirebaseAuthenticationProvider { }

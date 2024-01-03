@@ -82,3 +82,5 @@ extension GoogleAuthenticationProvider.Credential: FirebaseCredentialProvider {
         GoogleAuthProvider.credential(withIDToken: idToken, accessToken: accessToken)
     }
 }
+
+extension GoogleAuthenticationProvider: FirebaseAuthenticationProvider { }
