@@ -24,10 +24,11 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPr
     /// The authentication credential structure for Google authentication.
     public struct Credential {
         /// The ID token obtained from Google authentication.
-        let idToken: String
+        public var idToken: String
         /// The access token obtained from Google authentication.
-        let accessToken: String
+        public var accessToken: String
 
+        @inlinable
         public init(idToken: String, accessToken: String) {
             self.idToken = idToken
             self.accessToken = accessToken
@@ -48,6 +49,7 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPr
 
     /// Initializes a `GoogleAuthenticationProvider` with a presenting view controller.
     /// - Parameter presentingController: The view controller for presenting Google authentication UI.
+    @inlinable
     public init() { }
     
     /// Retrieves the Google authentication credential asynchronously.

@@ -12,9 +12,10 @@ import Firebase
 public struct PasswordAuthenticationProvider: AuthenticationProvider {
     /// The credential structure containing email and password.
     public struct Credential {
-        public let email: String
-        public let password: String
+        public var email: String
+        public var password: String
 
+        @inlinable
         public init(email: String, password: String) {
             self.email = email
             self.password = password
@@ -24,6 +25,7 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
     public struct SignInOptions: OptionSet {
         public let rawValue: UInt
 
+        @inlinable
         public init(rawValue: UInt) {
             self.rawValue = rawValue
         }
@@ -42,6 +44,7 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
     /// - Parameters:
     ///   - email: The email for authentication.
     ///   - password: The password for authentication.
+    @inlinable
     public init(email: String, password: String, options: SignInOptions = []) {
         self.email = email
         self.password = password
@@ -50,6 +53,7 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
     
     /// Retrieves the authentication credential asynchronously.
     /// - Returns: A `Credential` instance containing email and password.
+    @inlinable
     public func credential() async throws -> Credential {
         Credential(email: email, password: password)
     }

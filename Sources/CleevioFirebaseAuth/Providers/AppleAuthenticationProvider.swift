@@ -16,14 +16,15 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
     /// The authentication credential structure for Apple authentication.
     public struct Credential {
         /// The ID token obtained from Apple authentication.
-        let idToken: String
+        public var idToken: String
         /// The authorization code obtained from Apple authentication.
-        let authCode: String
+        public var authCode: String
         /// The full name associated with the authenticated Apple account.
-        let fullName: PersonNameComponents?
+        public var fullName: PersonNameComponents?
         /// A nonce value used to enhance security.
-        var nonce: String?
+        public var nonce: String?
 
+        @inlinable
         public init(idToken: String,
                     authCode: String,
                     fullName: PersonNameComponents?,
