@@ -103,10 +103,19 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
         }
 
         func handleErrorCode(error: AuthErrorCode, credential: Provider.Credential) async throws -> AuthDataResult {
-            if let provider = provider as? PasswordAuthenticationProvider,
-               let credential = credential as? PasswordAuthenticationProvider.Credential,
-               error.code == AuthErrorCode.userNotFound && provider.options.contains(.signUpOnUserNotFound) || error.code == AuthErrorCode.internalError && provider.options.contains(.signUpOnInternalError) {
-                return try await signUp(withEmail: credential.email, password: credential.password)
+            if 
+                let provider = provider as? PasswordAuthenticationProvider,
+                let credential = credential as? PasswordAuthenticationProvider.Credential {
+                
+                if 
+                    error.code == AuthErrorCode.userNotFound && provider.options.contains(.signUpOnUserNotFound) ||
+                    error.code == AuthErrorCode.internalError && provider.options.contains(.signUpOnInternalError) {
+                    return try await signUp(withEmail: credential.email, password: credential.password)
+                }
+
+                if error.code == AuthErrorCode.operationNotAllowed && provider.options.contains(.signInOnOperationNotAllowed) {
+                    return try await signIn(with: credential.firebaseCredential, link: false)
+                }
             }
 
             throw error
@@ -120,10 +129,23 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
             return (credential, try await handleErrorCode(error: error, credential: credential))
         }
     }
+    
+    /**
+     A function for signing in a user with a Firebase credential.
 
+     - Parameters:
+        - firebaseCredential: The `AuthCredential` object representing the Firebase credential to authenticate with.
+        - link: A boolean value indicating whether to link the provided credential with the current user's account. Default value is `true`.
+
+     - Returns: An `AuthDataResult` object representing the result of the sign-in operation.
+
+     - Throws: An error if the sign-in operation fails.
+
+     If the `link` parameter is set to `true` and there's a current user logged in, the provided `firebaseCredential` will be linked to the current user's account. Otherwise, the credential will be used for signing in.
+     */
     @discardableResult
-    public func signIn(with firebaseCredential: AuthCredential) async throws -> AuthDataResult {
-        if let user {
+    public func signIn(with firebaseCredential: AuthCredential, link: Bool = true) async throws -> AuthDataResult {
+        if let user, link {
             return try await user.link(with: firebaseCredential)
         } else {
             return try await auth.signIn(with: firebaseCredential)

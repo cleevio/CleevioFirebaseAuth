@@ -34,6 +34,8 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
 
         /// Needed with enumeration protection turned on as Firebase returns internal error so that attacker cannot determine if user exists
         public static let signUpOnInternalError = Self(rawValue: 1 << 1)
+
+        public static let signInOnOperationNotAllowed = Self(rawValue: 1 << 2)
     }
     
     public let email: String
