@@ -112,10 +112,6 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
                     error.code == AuthErrorCode.internalError && provider.options.contains(.signUpOnInternalError) {
                     return try await signUp(withEmail: credential.email, password: credential.password)
                 }
-
-                if error.code == AuthErrorCode.operationNotAllowed && provider.options.contains(.signInOnOperationNotAllowed) {
-                    return try await signIn(with: credential.firebaseCredential, link: false)
-                }
             }
 
             throw error
@@ -125,6 +121,8 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
 
         do {
             return (credential, try await signIn(with: credential.firebaseCredential))
+        } catch let error as AuthErrorCode where error.code == AuthErrorCode.operationNotAllowed {
+            return (credential, try await signIn(with: credential.firebaseCredential, link: false))
         } catch let error as AuthErrorCode {
             return (credential, try await handleErrorCode(error: error, credential: credential))
         }
