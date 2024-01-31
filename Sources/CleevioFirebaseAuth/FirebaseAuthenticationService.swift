@@ -107,9 +107,10 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
                 let provider = provider as? PasswordAuthenticationProvider,
                 let credential = credential as? PasswordAuthenticationProvider.Credential {
                 
-                if 
-                    error.code == AuthErrorCode.userNotFound && provider.options.contains(.signUpOnUserNotFound) ||
-                    error.code == AuthErrorCode.internalError && provider.options.contains(.signUpOnInternalError) {
+                if
+                    provider.options.contains(.signUpOnAnyError) ||
+                    error.code == AuthErrorCode.userNotFound && provider.options.contains(.signUpOnUserNotFound)
+                     {
                     return try await signUp(withEmail: credential.email, password: credential.password)
                 }
             }
