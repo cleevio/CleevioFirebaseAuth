@@ -145,7 +145,11 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
     @discardableResult
     public func signIn(with firebaseCredential: AuthCredential, link: Bool = true) async throws -> AuthDataResult {
         if let user, link {
-            return try await user.link(with: firebaseCredential)
+            do {
+                return try await user.link(with: firebaseCredential)
+            } catch let error as AuthErrorCode where error.code == AuthErrorCode.emailAlreadyInUse {
+                return try await auth.signIn(with: firebaseCredential)
+            }
         } else {
             return try await auth.signIn(with: firebaseCredential)
         }
