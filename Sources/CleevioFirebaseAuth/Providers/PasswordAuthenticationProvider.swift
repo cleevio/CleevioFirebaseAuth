@@ -33,6 +33,8 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
         public static let signUpOnUserNotFound = Self(rawValue: 1 << 0)
 
         /// Needed with enumeration protection turned on as Firebase returns different errors at random (such as AuthErrorCode.internalError or AuthErrorCode.invalidCredential) so that attacker cannot determine if user exists
+        /// Firebase changes the error codes in runtime on their BE so it could break signup in production
+        /// More information: https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection#overview
         public static let signUpOnAnyError = Self(rawValue: 1 << 1)
     }
     
