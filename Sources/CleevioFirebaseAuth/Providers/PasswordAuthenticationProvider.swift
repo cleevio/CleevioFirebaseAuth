@@ -36,6 +36,9 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
         /// Firebase changes the error codes in runtime on their BE so it could break signup in production
         /// More information: https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection#overview
         public static let signUpOnAnyError = Self(rawValue: 1 << 1)
+
+        /// When signing in try to link the existing account to the provided credentials
+        public static let tryLinkOnSignIn = Self(rawValue: 1 << 2)
     }
     
     public let email: String
