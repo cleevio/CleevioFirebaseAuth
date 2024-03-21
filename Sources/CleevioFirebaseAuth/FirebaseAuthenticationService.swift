@@ -123,7 +123,9 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
         do {
             let link: Bool = (provider as? PasswordAuthenticationProvider).map { $0.options.contains(.tryLinkOnSignIn) } != false
             return (credential, try await signIn(with: credential.firebaseCredential, link: link))
-        } catch let error as AuthErrorCode where error.code == AuthErrorCode.operationNotAllowed {
+        } catch
+            let error as AuthErrorCode where error.code == AuthErrorCode.operationNotAllowed,
+            let error as AuthErrorCode where error.code == AuthErrorCode.missingOrInvalidNonce {
             return (credential, try await signIn(with: credential.firebaseCredential, link: false))
         } catch let error as AuthErrorCode {
             return (credential, try await handleErrorCode(error: error, credential: credential))
