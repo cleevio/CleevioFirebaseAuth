@@ -124,9 +124,11 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
             let link: Bool = (provider as? PasswordAuthenticationProvider).map { $0.options.contains(.tryLinkOnSignIn) } != false
             return (credential, try await signIn(with: credential.firebaseCredential, link: link))
         } catch
-            let error as AuthErrorCode where error.code == AuthErrorCode.operationNotAllowed,
-            let error as AuthErrorCode where error.code == AuthErrorCode.missingOrInvalidNonce {
+            let error as AuthErrorCode where error.code == AuthErrorCode.operationNotAllowed {
             return (credential, try await signIn(with: credential.firebaseCredential, link: false))
+        } catch let error as AuthErrorCode where error.code == AuthErrorCode.missingOrInvalidNonce && provider is AppleAuthenticationProvider {
+            let newCredential = try await provider.credential()
+            return (newCredential, try await signIn(with: newCredential.firebaseCredential, link: false))
         } catch let error as AuthErrorCode {
             return (credential, try await handleErrorCode(error: error, credential: credential))
         }
