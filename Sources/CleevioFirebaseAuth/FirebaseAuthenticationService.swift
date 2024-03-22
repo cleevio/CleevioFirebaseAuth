@@ -149,8 +149,8 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
      */
     @discardableResult
     public func signIn(with firebaseCredential: AuthCredential, link: Bool = true) async throws -> AuthDataResult {
-        if let user, link, let result = try? await user.link(with: firebaseCredential) {
-            return result
+        if let user, link {
+            return try await user.link(with: firebaseCredential)
         } else {
             return try await auth.signIn(with: firebaseCredential)
         }
