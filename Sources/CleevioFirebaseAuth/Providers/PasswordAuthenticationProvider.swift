@@ -60,6 +60,19 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
     public func credential() async throws -> Credential {
         Credential(email: email, password: password)
     }
+
+    public func authenticate(_ auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult {
+        let credential = try await credential()
+
+        do {
+            let link = options.contains(.tryLinkOnSignIn)
+            return try await auth.signIn(with: credential.firebaseCredential, link: link)
+        } catch let error as AuthErrorCode where
+            error.code == .userNotFound && options.contains(.signUpOnUserNotFound) ||
+            options.contains(.signUpOnAnyError) {
+            return try await auth.signUp(withEmail: credential.email, password: credential.password)
+        }
+    }
 }
 
 extension PasswordAuthenticationProvider.Credential: FirebaseCredentialProvider {

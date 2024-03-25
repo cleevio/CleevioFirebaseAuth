@@ -76,6 +76,17 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPr
     public static func handleSignInURL(_ url: URL) -> Bool {
         gidInstance.handle(url)
     }
+
+    public func authenticate(_ auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult {
+        let credential = try await credential()
+
+        do {
+            return try await auth.signIn(with: credential.firebaseCredential, link: true)
+        } catch let error as AuthErrorCode where error.code == .credentialAlreadyInUse {
+            let updatedCredentials = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
+            return try await auth.signIn(with: updatedCredentials ?? credential.firebaseCredential, link: false)
+        }
+    }
 }
 
 extension GoogleAuthenticationProvider.Credential: FirebaseCredentialProvider {

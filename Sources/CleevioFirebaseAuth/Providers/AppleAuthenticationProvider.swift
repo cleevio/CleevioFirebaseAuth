@@ -75,7 +75,21 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
             authorizationController.performRequests()
         }
     }
-    
+
+    public func authenticate(_ auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult {
+        let credential = try await credential()
+
+        do {
+            return try await auth.signIn(with: credential.firebaseCredential, link: true)
+        } catch
+            let error as AuthErrorCode where 
+                error.code == .credentialAlreadyInUse ||
+                error.code == .missingOrInvalidNonce {
+            let updatedCredential = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
+            return try await auth.signIn(with: updatedCredential ?? credential.firebaseCredential, link: false)
+        }
+    }
+
     /// Generates a random nonce string.
     private func randomNonceString() -> String {
         return Data(AES.GCM.Nonce()).base64EncodedString()

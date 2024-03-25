@@ -21,6 +21,8 @@ public protocol AuthenticationProvider {
     /// Retrieve the authentication credential asynchronously.
     /// - Returns: An instance of `Credential`.
     func credential() async throws -> Credential
+
+    func authenticate(_ auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult
 }
 
 /// A protocol for authentication providers providing Firebase credentials.
@@ -46,7 +48,9 @@ public protocol FirebaseAuthenticationServiceType {
     /// If sign in fails and provider is PasswordAuthenticationProvider, user is created calling signUp(withEmail:password) depending on PasswordAuthenticationProvider.SignInOptions
     /// - Parameter provider: An authentication provider.
     @discardableResult
-    func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> (Provider.Credential, AuthDataResult) where Provider.Credential: FirebaseCredentialProvider
+    func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthDataResult where Provider.Credential: FirebaseCredentialProvider
+
+    func signIn(with credential: AuthCredential, link: Bool) async throws -> AuthDataResult
 
     /// Sign out the current user.
     func signOut() async throws
@@ -97,41 +101,12 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
     }
     
     @discardableResult
-    public func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> (Provider.Credential, AuthDataResult) where Provider.Credential: FirebaseCredentialProvider {
+    public func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthDataResult where Provider.Credential: FirebaseCredentialProvider {
         if let provider = provider as? NeedsPresentingViewController, provider.presentingViewController == nil {
             provider.presentingViewController = presentingViewController()
         }
 
-        func handleErrorCode(error: AuthErrorCode, credential: Provider.Credential) async throws -> AuthDataResult {
-            if 
-                let provider = provider as? PasswordAuthenticationProvider,
-                let credential = credential as? PasswordAuthenticationProvider.Credential {
-                
-                if
-                    provider.options.contains(.signUpOnAnyError) ||
-                    error.code == AuthErrorCode.userNotFound && provider.options.contains(.signUpOnUserNotFound)
-                     {
-                    return try await signUp(withEmail: credential.email, password: credential.password)
-                }
-            }
-
-            throw error
-        }
-
-        let credential = try await provider.credential()
-
-        do {
-            let link: Bool = (provider as? PasswordAuthenticationProvider).map { $0.options.contains(.tryLinkOnSignIn) } != false
-            return (credential, try await signIn(with: credential.firebaseCredential, link: link))
-        } catch
-            let error as AuthErrorCode where error.code == .operationNotAllowed || error.code == .credentialAlreadyInUse {
-            return (credential, try await signIn(with: credential.firebaseCredential, link: false))
-        } catch let error as AuthErrorCode where error.code == AuthErrorCode.missingOrInvalidNonce && provider is AppleAuthenticationProvider {
-            let newCredential = try await provider.credential()
-            return (newCredential, try await signIn(with: newCredential.firebaseCredential, link: false))
-        } catch let error as AuthErrorCode {
-            return (credential, try await handleErrorCode(error: error, credential: credential))
-        }
+        return try await provider.authenticate(self)
     }
     
     /**
