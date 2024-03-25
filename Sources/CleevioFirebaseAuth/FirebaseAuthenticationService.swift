@@ -59,7 +59,7 @@ public protocol FirebaseAuthenticationServiceType {
     func verifyPasswordResetCode(for email: String, code: String) async throws
 
     /// Changes user password using code (such as code user received via request to reset password)
-    func changePassword(for email: String, withCode code: String, newPassword password: String) async throws
+    func changePassword(withCode code: String, newPassword password: String) async throws
 
     /// Requests Firebase to send user e-mail with reset password
     func requestResetPassword(for email: String) async throws
@@ -173,7 +173,7 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
         try await auth.verifyPasswordResetCode(code)
     }
 
-    public func changePassword(for email: String, withCode code: String, newPassword password: String) async throws {
+    public func changePassword(withCode code: String, newPassword password: String) async throws {
         try await auth.confirmPasswordReset(withCode: code, newPassword: password)
     }
 
