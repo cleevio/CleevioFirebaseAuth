@@ -99,3 +99,5 @@ extension FacebookAuthenticationProvider.Credential: FirebaseCredentialProvider 
         FacebookAuthProvider.credential(withAccessToken: accessToken)
     }
 }
+
+extension FacebookAuthenticationProvider: FirebaseAuthenticationProvider { }
