@@ -67,12 +67,11 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
         do {
             let link = options.contains(.tryLinkOnSignIn)
             return try await auth.signIn(with: credential.firebaseCredential, link: link)
+        } catch let error as AuthErrorCode where
+            error.code == .userNotFound && options.contains(.signUpOnUserNotFound) ||
+            options.contains(.signUpOnAnyError) {
+            return try await auth.signUp(withEmail: credential.email, password: credential.password)
         }
-//        } catch let error as AuthErrorCode where
-//            error.code == .userNotFound && options.contains(.signUpOnUserNotFound) ||
-//            options.contains(.signUpOnAnyError) {
-//            return try await auth.signUp(withEmail: credential.email, password: credential.password)
-//        }
     }
 }
 
