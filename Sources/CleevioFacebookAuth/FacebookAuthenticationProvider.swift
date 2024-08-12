@@ -24,12 +24,32 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
         case missingAccessToken
     }
 
+    public enum Permission {
+        case email
+        case publicProfile
+
+        fileprivate var fbPermission: String {
+            switch self {
+            case .email:
+                "email"
+            case .publicProfile:
+                "public_profile"
+            }
+        }
+    }
+
+    public let permissions: [Permission]
+
     /// A weak reference to the view controller that presents the Facebook login UI.
     public weak var presentingViewController: PlatformViewController?
 
     /// Initializes a new instance of `FacebookAuthenticationProvider`.
     @inlinable
-    public init() {}
+    public init(
+        permissions: [Permission]
+    ) {
+        self.permissions = permissions
+    }
 
     /// Asynchronously retrieves a `Credential` containing a Facebook access token.
     ///
@@ -41,9 +61,10 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
     /// - Throws: An `AuthenticatorError` if authentication fails.
     @MainActor
     public func credential() async throws -> Credential {
-        try await withCheckedThrowingContinuation { [presentingViewController] continuation in
+        try await withCheckedThrowingContinuation {
+            [presentingViewController, permissions] continuation in
             FBSDKLoginKit.LoginManager().logIn(
-                permissions: ["public_profile", "email"],
+                permissions: permissions.map(\.fbPermission),
                 from: presentingViewController,
                 handler: { result, error in
                     if let error {
