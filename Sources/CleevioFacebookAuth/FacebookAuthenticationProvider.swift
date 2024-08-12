@@ -1,4 +1,4 @@
-import CleevioFirebaseAuthCore
+import CleevioFirebaseAuth
 import FBSDKLoginKit
 import FirebaseAuth
 import Foundation

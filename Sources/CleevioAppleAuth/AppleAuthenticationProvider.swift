@@ -1,4 +1,4 @@
-import CleevioFirebaseAuthCore
+import CleevioFirebaseAuth
 import Foundation
 import AuthenticationServices
 import CryptoKit

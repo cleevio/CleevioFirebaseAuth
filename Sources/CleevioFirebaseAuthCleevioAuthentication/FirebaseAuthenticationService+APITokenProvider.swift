@@ -1,6 +1,6 @@
 import Foundation
 import CleevioAuthentication
-import CleevioFirebaseAuthCore
+import CleevioFirebaseAuth
 
 extension FirebaseAuthenticationService: CleevioAuthentication.APITokenProvider {
     /// Retrieves the API token associated with the currently logged-in user.
