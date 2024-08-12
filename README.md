@@ -10,9 +10,6 @@ CleevioFirebaseAuth is a Swift package that provides a set of libraries for inte
 - **Facebook Login**: Integrate Facebook Login with Firebase.
 - **Modular Design**: Each authentication method is provided as a separate library, allowing you to only include the functionality you need.
 
-## Setup Guides
-To set up the various authentication providers, please refer to the following guides:
-
 ## Requirements
 
 - iOS 13.0+ / macOS 10.15+
