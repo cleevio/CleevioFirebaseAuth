@@ -1,6 +1,6 @@
-import CleevioFirebaseAuth
+import CleevioFirebaseAuthCore
 import FBSDKLoginKit
-import Firebase
+import FirebaseAuth
 import Foundation
 
 /// `FacebookAuthenticationProvider` is a class that implements `AuthenticationProvider` and

@@ -4,12 +4,12 @@
 import PackageDescription
 
 let swiftSettings: [SwiftSetting] = [
-// Only for development checks
-//    SwiftSetting.unsafeFlags([
-//        "-Xfrontend", "-strict-concurrency=complete",
-//        "-Xfrontend", "-warn-concurrency",
-//        "-Xfrontend", "-enable-actor-data-race-checks",
-//    ])
+    // Only for development checks
+    //    SwiftSetting.unsafeFlags([
+    //        "-Xfrontend", "-strict-concurrency=complete",
+    //        "-Xfrontend", "-warn-concurrency",
+    //        "-Xfrontend", "-enable-actor-data-race-checks",
+    //    ])
 ]
 
 let package = Package(
@@ -22,7 +22,11 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "CleevioFirebaseAuth",
-            targets: ["CleevioFirebaseAuth"]),
+            targets: ["CleevioFirebaseAuthCore", "CleevioAppleAuth", "CleevioGoogleAuth", "CleevioFacebookAuth"]
+        ),
+        .library(
+            name: "CleevioFirebaseAuthCore",
+            targets: ["CleevioFirebaseAuthCore"]),
         .library(
             name: "CleevioAppleAuth",
             targets: ["CleevioAppleAuth"]
@@ -43,16 +47,16 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-algorithms", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://github.com/google/GoogleSignIn-iOS", .upToNextMajor(from: "7.1.0")),
         .package(url: "https://github.com/facebook/facebook-ios-sdk", .upToNextMajor(from: "17.0.0")),
-        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "11.0.0")),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "10.0.0")),
         .package(url: "git@gitlab.cleevio.cz:cleevio-dev-ios/cleevioapi.git", "0.4.1-dev1"..<"0.6.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
-            name: "CleevioFirebaseAuth",
+            name: "CleevioFirebaseAuthCore",
             dependencies: [
-               .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
             ],
             swiftSettings: swiftSettings
         ),
@@ -60,7 +64,8 @@ let package = Package(
             name: "CleevioGoogleAuth",
             dependencies: [
                 .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
-                .target(name: "CleevioFirebaseAuth")
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
+                .target(name: "CleevioFirebaseAuthCore")
             ],
             swiftSettings: swiftSettings
         ),
@@ -68,31 +73,32 @@ let package = Package(
             name: "CleevioAppleAuth",
             dependencies: [
                 .product(name: "Algorithms", package: "swift-algorithms"),
-                .target(name: "CleevioFirebaseAuth")
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
+                .target(name: "CleevioFirebaseAuthCore")
             ],
             swiftSettings: swiftSettings
         ),
         .target(
             name: "CleevioFacebookAuth",
             dependencies: [
-                .product(name: "Algorithms", package: "swift-algorithms"),
                 .product(name: "FacebookLogin", package: "facebook-ios-sdk"),
-                .target(name: "CleevioFirebaseAuth")
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
+                .target(name: "CleevioFirebaseAuthCore")
             ],
             swiftSettings: swiftSettings
         ),
         .target(
             name: "CleevioFirebaseAuthCleevioAuthentication",
             dependencies: [
-                "CleevioFirebaseAuth",
-               .product(name: "CleevioAPI", package: "cleevioapi"),
-               .product(name: "CleevioAuthentication", package: "cleevioapi"),
+                .target(name: "CleevioFirebaseAuthCore"),
+                .product(name: "CleevioAPI", package: "cleevioapi"),
+                .product(name: "CleevioAuthentication", package: "cleevioapi"),
             ],
             swiftSettings: swiftSettings),
         .testTarget(
-            name: "CleevioFirebaseAuthTests",
+            name: "CleevioFirebaseAuthCoreTests",
             dependencies: [
-                "CleevioFirebaseAuth"
+                "CleevioFirebaseAuthCore"
             ],
             swiftSettings: swiftSettings)
     ]

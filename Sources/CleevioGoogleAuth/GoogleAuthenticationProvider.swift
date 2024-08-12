@@ -1,5 +1,6 @@
-import CleevioFirebaseAuth
-import Firebase
+import CleevioFirebaseAuthCore
+import FirebaseCore
+import FirebaseAuth
 import Foundation
 import GoogleSignIn
 
