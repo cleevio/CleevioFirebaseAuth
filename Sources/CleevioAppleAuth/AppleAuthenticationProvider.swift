@@ -5,6 +5,7 @@
 //  Created by Lukáš Valenta on 19.08.2023.
 //
 
+import CleevioFirebaseAuth
 import Foundation
 import AuthenticationServices
 import CryptoKit

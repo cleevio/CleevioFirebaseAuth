@@ -24,13 +24,26 @@ let package = Package(
             name: "CleevioFirebaseAuth",
             targets: ["CleevioFirebaseAuth"]),
         .library(
+            name: "CleevioAppleAuth",
+            targets: ["CleevioAppleAuth"]
+        ),
+        .library(
+            name: "CleevioGoogleAuth",
+            targets: ["CleevioGoogleAuth"]
+        ),
+        .library(
+            name: "CleevioFacebookAuth",
+            targets: ["CleevioFacebookAuth"]
+        ),
+        .library(
             name: "CleevioFirebaseAuthCleevioAuthentication",
             targets: ["CleevioFirebaseAuthCleevioAuthentication"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-algorithms", .upToNextMajor(from: "1.0.0")),
-        .package(url: "https://github.com/google/GoogleSignIn-iOS", .upToNextMajor(from: "7.0.0")),
-        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "10.3.0")),
+        .package(url: "https://github.com/google/GoogleSignIn-iOS", .upToNextMajor(from: "7.1.0")),
+        .package(url: "https://github.com/facebook/facebook-ios-sdk", .upToNextMajor(from: "17.0.0")),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "11.0.0")),
         .package(url: "git@gitlab.cleevio.cz:cleevio-dev-ios/cleevioapi.git", "0.4.1-dev1"..<"0.6.0")
     ],
     targets: [
@@ -39,11 +52,35 @@ let package = Package(
         .target(
             name: "CleevioFirebaseAuth",
             dependencies: [
-               .product(name: "Algorithms", package: "swift-algorithms"),
-               .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
-               .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
+               .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
             ],
-            swiftSettings: swiftSettings),
+            swiftSettings: swiftSettings
+        ),
+        .target(
+            name: "CleevioGoogleAuth",
+            dependencies: [
+                .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
+                .target(name: "CleevioFirebaseAuth")
+            ],
+            swiftSettings: swiftSettings
+        ),
+        .target(
+            name: "CleevioAppleAuth",
+            dependencies: [
+                .product(name: "Algorithms", package: "swift-algorithms"),
+                .target(name: "CleevioFirebaseAuth")
+            ],
+            swiftSettings: swiftSettings
+        ),
+        .target(
+            name: "CleevioFacebookAuth",
+            dependencies: [
+                .product(name: "Algorithms", package: "swift-algorithms"),
+                .product(name: "FacebookLogin", package: "facebook-ios-sdk"),
+                .target(name: "CleevioFirebaseAuth")
+            ],
+            swiftSettings: swiftSettings
+        ),
         .target(
             name: "CleevioFirebaseAuthCleevioAuthentication",
             dependencies: [

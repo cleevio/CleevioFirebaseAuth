@@ -1,23 +1,7 @@
-//
-//  GoogleAuthenticationProvider.swift
-//  
-//
-//  Created by Lukáš Valenta on 19.08.2023.
-//
-
+import CleevioFirebaseAuth
+import Firebase
 import Foundation
 import GoogleSignIn
-import Firebase
-
-import GoogleSignIn
-
-#if os(iOS)
-import UIKit
-public typealias PlatformViewController = UIViewController
-#elseif os(macOS)
-import AppKit
-public typealias PlatformViewController = NSWindow
-#endif
 
 /// A class providing Google authentication services conforming to `AuthenticationProvider`.
 public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPresentingViewController {
@@ -84,7 +68,10 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPr
             return try await auth.signIn(with: credential.firebaseCredential, link: true)
         } catch let error as AuthErrorCode where error.code == .credentialAlreadyInUse {
             let updatedCredentials = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
-            return try await auth.signIn(with: updatedCredentials ?? credential.firebaseCredential, link: false)
+            return try await auth.signIn(
+                with: updatedCredentials ?? credential.firebaseCredential,
+                link: false
+            )
         }
     }
 }

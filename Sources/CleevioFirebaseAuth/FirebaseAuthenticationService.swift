@@ -1,10 +1,3 @@
-//
-//  FirebaseAuthenticationService.swift
-//  
-//
-//  Created by Lukáš Valenta on 19.08.2023.
-//
-
 import Foundation
 import FirebaseAuth
 
