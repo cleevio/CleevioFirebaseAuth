@@ -109,6 +109,9 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                 with: updatedCredentials ?? credential.firebaseCredential,
                 link: false
             )
+        } catch {
+            FBSDKLoginKit.LoginManager().logOut()
+            throw error
         }
     }
 }
