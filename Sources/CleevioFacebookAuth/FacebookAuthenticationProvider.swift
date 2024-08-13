@@ -11,6 +11,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
     /// `Credential` struct stores the access token obtained from Facebook.
     public struct Credential {
         let accessToken: String
+        let nonce: String
     }
 
     /// `AuthenticatorError` enum defines the various errors that can occur during the
@@ -52,11 +53,12 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
     public func credential() async throws -> Credential {
         try await withCheckedThrowingContinuation {
             [presentingViewController, permissions, tracking] continuation in
+            let nonce = randomNonceString()
             FBSDKLoginKit.LoginManager().logIn(
                 configuration: .init(
                     permissions: permissions,
                     tracking: tracking,
-                    nonce: sha256(randomNonceString())
+                    nonce: nonce
                 )
             ) { result in
                 switch result {
@@ -72,7 +74,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                     continuation.resume(throwing: AuthenticatorError.permissionDeclined(declinedPermissions))
                 case let .success(granted: _, declined: _, token: .some(token)):
                     // Resume with the access token if login is successful.
-                    continuation.resume(returning: Credential(accessToken: token.tokenString))
+                    continuation.resume(returning: Credential(accessToken: token.tokenString, nonce: nonce))
                 case .success(granted: _, declined: _, token: .none):
                     // Resume with an error if the access token is missing.
                     continuation.resume(throwing: AuthenticatorError.missingAccessToken)
