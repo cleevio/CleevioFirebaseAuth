@@ -19,26 +19,13 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
         /// Error when the user cancels the authentication process.
         case authenticationCancelled
         /// Error when the user declines one or more requested permissions.
-        case permissionDeclined(Set<String>)
+        case permissionDeclined(Set<Permission>)
         /// Error when the access token is missing after attempting to authenticate.
         case missingAccessToken
     }
 
-    public enum Permission {
-        case email
-        case publicProfile
-
-        fileprivate var fbPermission: String {
-            switch self {
-            case .email:
-                "email"
-            case .publicProfile:
-                "public_profile"
-            }
-        }
-    }
-
-    public let permissions: [Permission]
+    public let permissions: Set<FBSDKLoginKit.Permission>
+    public let tracking: FBSDKLoginKit.LoginTracking
 
     /// A weak reference to the view controller that presents the Facebook login UI.
     public weak var presentingViewController: PlatformViewController?
@@ -46,9 +33,11 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
     /// Initializes a new instance of `FacebookAuthenticationProvider`.
     @inlinable
     public init(
-        permissions: [Permission]
+        permissions: Set<FBSDKLoginKit.Permission>,
+        tracking: FBSDKLoginKit.LoginTracking = .limited
     ) {
         self.permissions = permissions
+        self.tracking = tracking
     }
 
     /// Asynchronously retrieves a `Credential` containing a Facebook access token.
@@ -62,29 +51,33 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
     @MainActor
     public func credential() async throws -> Credential {
         try await withCheckedThrowingContinuation {
-            [presentingViewController, permissions] continuation in
+            [presentingViewController, permissions, tracking] continuation in
             FBSDKLoginKit.LoginManager().logIn(
-                permissions: permissions.map(\.fbPermission),
-                from: presentingViewController,
-                handler: { result, error in
-                    if let error {
-                        // Resume with an error if there is one.
-                        continuation.resume(throwing: error)
-                    } else if let result, result.isCancelled {
-                        // Resume with an error if the user cancels the login process.
-                        continuation.resume(throwing: AuthenticatorError.authenticationCancelled)
-                    } else if let result, !result.declinedPermissions.isEmpty {
-                        // Resume with an error if the user declines any requested permissions.
-                        continuation.resume(throwing: AuthenticatorError.permissionDeclined(result.declinedPermissions))
-                    } else if let accessToken = result?.token?.tokenString {
-                        // Resume with the access token if login is successful.
-                        continuation.resume(returning: Credential(accessToken: accessToken))
-                    } else {
-                        // Resume with an error if the access token is missing.
-                        continuation.resume(throwing: AuthenticatorError.missingAccessToken)
-                    }
+                configuration: .init(
+                    permissions: permissions,
+                    tracking: tracking,
+                    nonce: sha256(randomNonceString())
+                )
+            ) { result in
+                switch result {
+                case .cancelled:
+                    // Resume with an error if the user cancels the login process.
+                    continuation.resume(throwing: AuthenticatorError.authenticationCancelled)
+                case let .failed(error):
+                    // Resume with an error if there is one.
+                    continuation.resume(throwing: error)
+                case let .success(granted: _, declined, token: _) where !declined.isEmpty:
+                    // Resume with an error if the user declines any requested permissions.
+                    let declinedPermissions = Set(declined.map(\.name).compactMap(Permission.init))
+                    continuation.resume(throwing: AuthenticatorError.permissionDeclined(declinedPermissions))
+                case let .success(granted: _, declined: _, token: .some(token)):
+                    // Resume with the access token if login is successful.
+                    continuation.resume(returning: Credential(accessToken: token.tokenString))
+                case .success(granted: _, declined: _, token: .none):
+                    // Resume with an error if the access token is missing.
+                    continuation.resume(throwing: AuthenticatorError.missingAccessToken)
                 }
-            )
+            }
         }
     }
 

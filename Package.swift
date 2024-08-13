@@ -52,7 +52,8 @@ let package = Package(
         .target(
             name: "CleevioFirebaseAuth",
             dependencies: [
-                .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
+                .product(name: "Algorithms", package: "swift-algorithms")
             ],
             swiftSettings: swiftSettings
         ),
@@ -68,7 +69,6 @@ let package = Package(
         .target(
             name: "CleevioAppleAuth",
             dependencies: [
-                .product(name: "Algorithms", package: "swift-algorithms"),
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
                 .target(name: "CleevioFirebaseAuth")
             ],

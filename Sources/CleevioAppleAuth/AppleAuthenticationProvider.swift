@@ -1,7 +1,6 @@
 import CleevioFirebaseAuth
 import Foundation
 import AuthenticationServices
-import CryptoKit
 import FirebaseAuth
 
 public final class AppleAuthenticationProvider: AuthenticationProvider {
@@ -82,24 +81,6 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
             let updatedCredential = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
             return try await auth.signIn(with: updatedCredential ?? credential.firebaseCredential, link: false)
         }
-    }
-
-    /// Generates a random nonce string.
-    private func randomNonceString() -> String {
-        return Data(AES.GCM.Nonce()).base64EncodedString()
-    }
-
-    /// Generates a SHA-256 hash of the input string.
-    /// - Parameter input: The input string to be hashed.
-    /// - Returns: The SHA-256 hash of the input string.
-    private func sha256(_ input: String) -> String {
-        let inputData = Data(input.utf8)
-        let hashedData = SHA256.hash(data: inputData)
-        let hashString = hashedData.compactMap {
-            String(format: "%02x", $0)
-        }.joined()
-        
-        return hashString
     }
   
     /// A private delegate class for handling Apple authorization.
