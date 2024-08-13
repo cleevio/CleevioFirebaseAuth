@@ -107,7 +107,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
             let updatedCredentials = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
             return try await auth.signIn(
                 with: updatedCredentials ?? credential.firebaseCredential,
-                link: true
+                link: false
             )
         }
     }
