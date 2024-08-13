@@ -11,6 +11,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
     /// `Credential` struct stores the access token obtained from Facebook.
     public struct Credential {
         let accessToken: String
+        let idToken: String?
         let nonce: String
     }
 
@@ -58,7 +59,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                 configuration: .init(
                     permissions: permissions,
                     tracking: tracking,
-                    nonce: nonce
+                    nonce: sha256(nonce)
                 )
             ) { result in
                 switch result {
@@ -74,7 +75,11 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                     continuation.resume(throwing: AuthenticatorError.permissionDeclined(declinedPermissions))
                 case let .success(granted: _, declined: _, token: .some(token)):
                     // Resume with the access token if login is successful.
-                    continuation.resume(returning: Credential(accessToken: token.tokenString, nonce: nonce))
+                    continuation.resume(returning: Credential(
+                        accessToken: token.tokenString,
+                        idToken: FBSDKLoginKit.AuthenticationToken.current?.tokenString,
+                        nonce: nonce
+                    ))
                 case .success(granted: _, declined: _, token: .none):
                     // Resume with an error if the access token is missing.
                     continuation.resume(throwing: AuthenticatorError.missingAccessToken)
@@ -112,7 +117,15 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
 extension FacebookAuthenticationProvider.Credential: FirebaseCredentialProvider {
     /// Converts the Facebook access token to a Firebase `AuthCredential`.
     public var firebaseCredential: AuthCredential {
-        FacebookAuthProvider.credential(withAccessToken: accessToken)
+        if let idToken {
+            OAuthProvider.credential(
+                withProviderID: FacebookAuthProviderID,
+                idToken: idToken,
+                rawNonce: nonce
+            )
+        } else {
+            FacebookAuthProvider.credential(withAccessToken: accessToken)
+        }
     }
 }
 
