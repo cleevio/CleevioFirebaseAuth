@@ -7,11 +7,13 @@ import Foundation
 /// `NeedsPresentingViewController` to provide authentication via Facebook. It handles the
 /// process of obtaining a Facebook access token and uses it to authenticate with Firebase.
 public final class FacebookAuthenticationProvider: AuthenticationProvider, NeedsPresentingViewController {
-
     /// `Credential` struct stores the access token obtained from Facebook.
     public struct Credential {
-        let accessToken: String
-        let idToken: String?
+        enum Token {
+            case access(String)
+            case id(String)
+        }
+        let token: Token
         let nonce: String
     }
 
@@ -73,16 +75,14 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                     // Resume with an error if the user declines any requested permissions.
                     let declinedPermissions = Set(declined.map(\.name).compactMap(Permission.init))
                     continuation.resume(throwing: AuthenticatorError.permissionDeclined(declinedPermissions))
-                case let .success(granted: _, declined: _, token: .some(token)):
-                    // Resume with the access token if login is successful.
-                    continuation.resume(returning: Credential(
-                        accessToken: token.tokenString,
-                        idToken: FBSDKLoginKit.AuthenticationToken.current?.tokenString,
-                        nonce: nonce
-                    ))
-                case .success(granted: _, declined: _, token: .none):
-                    // Resume with an error if the access token is missing.
-                    continuation.resume(throwing: AuthenticatorError.missingAccessToken)
+                case let .success(granted: _, declined: _, token: token):
+                    if let accessToken = token?.tokenString {
+                        continuation.resume(returning: Credential(token: .access(accessToken), nonce: nonce))
+                    } else if let idToken = FBSDKLoginKit.AuthenticationToken.current?.tokenString {
+                        continuation.resume(returning: Credential(token: .id(idToken), nonce: nonce))
+                    } else {
+                        continuation.resume(throwing: AuthenticatorError.missingAccessToken)
+                    }
                 }
             }
         }
@@ -117,14 +117,15 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
 extension FacebookAuthenticationProvider.Credential: FirebaseCredentialProvider {
     /// Converts the Facebook access token to a Firebase `AuthCredential`.
     public var firebaseCredential: AuthCredential {
-        if let idToken {
+        switch token {
+        case let .id(token):
             OAuthProvider.credential(
                 withProviderID: FacebookAuthProviderID,
-                idToken: idToken,
+                idToken: token,
                 rawNonce: nonce
             )
-        } else {
-            FacebookAuthProvider.credential(withAccessToken: accessToken)
+        case let .access(token):
+            FacebookAuthProvider.credential(withAccessToken: token)
         }
     }
 }
