@@ -102,12 +102,12 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
         do {
             // Attempt to sign in with the obtained Facebook credentials, with linking enabled.
             return try await auth.signIn(with: credential.firebaseCredential, link: true)
-        } catch let error as AuthErrorCode where error.code == .credentialAlreadyInUse {
+        } catch let error as AuthErrorCode where [.credentialAlreadyInUse, .emailAlreadyInUse].contains(error.code) {
             // Handle the case where the Facebook credential is already in use.
             let updatedCredentials = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
             return try await auth.signIn(
                 with: updatedCredentials ?? credential.firebaseCredential,
-                link: false
+                link: true
             )
         }
     }
