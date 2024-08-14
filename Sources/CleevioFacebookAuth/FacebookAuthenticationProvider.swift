@@ -58,6 +58,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
             [presentingViewController, permissions, tracking] continuation in
             let nonce = randomNonceString()
             FBSDKLoginKit.LoginManager().logIn(
+                viewController: presentingViewController,
                 configuration: .init(
                     permissions: permissions,
                     tracking: tracking,
