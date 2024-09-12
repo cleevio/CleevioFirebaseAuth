@@ -62,7 +62,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                 configuration: .init(
                     permissions: permissions,
                     tracking: tracking,
-                    nonce: nonce
+                    nonce: sha256(nonce)
                 )
             ) { result in
                 switch result {
@@ -77,10 +77,10 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                     let declinedPermissions = Set(declined.map(\.name).compactMap(Permission.init))
                     continuation.resume(throwing: AuthenticatorError.permissionDeclined(declinedPermissions))
                 case let .success(granted: _, declined: _, token: token):
-                    if let accessToken = token?.tokenString {
-                        continuation.resume(returning: Credential(token: .access(accessToken), nonce: nonce))
-                    } else if let idToken = FBSDKLoginKit.AuthenticationToken.current?.tokenString {
+                    if let idToken = FBSDKLoginKit.AuthenticationToken.current?.tokenString {
                         continuation.resume(returning: Credential(token: .id(idToken), nonce: nonce))
+                    } else if let accessToken = token?.tokenString {
+                        continuation.resume(returning: Credential(token: .access(accessToken), nonce: nonce))
                     } else {
                         continuation.resume(throwing: AuthenticatorError.missingAccessToken)
                     }
