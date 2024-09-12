@@ -61,8 +61,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                 viewController: presentingViewController,
                 configuration: .init(
                     permissions: permissions,
-                    tracking: tracking,
-                    nonce: sha256(nonce)
+                    tracking: tracking
                 )
             ) { result in
                 switch result {
