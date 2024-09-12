@@ -62,7 +62,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                 configuration: .init(
                     permissions: permissions,
                     tracking: tracking,
-                    nonce: nonce
+                    nonce: sha256(nonce)
                 )
             ) { result in
                 switch result {
