@@ -61,7 +61,7 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
         Credential(email: email, password: password)
     }
 
-    public func authenticate(_ auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult {
+    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult {
         let credential = try await credential()
 
         do {

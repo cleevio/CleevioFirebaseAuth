@@ -15,7 +15,7 @@ public protocol AuthenticationProvider {
     /// - Returns: An instance of `Credential`.
     func credential() async throws -> Credential
 
-    func authenticate(_ auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult
+    func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult
 }
 
 /// A protocol for authentication providers providing Firebase credentials.
@@ -74,7 +74,7 @@ public protocol FirebaseAuthenticationServiceType {
     var user: FirebaseAuth.User? { get }
 
     /// Used by signIn method that sets presentingViewController on AuthenticationProvider conforming to NeedsPresentingViewController if the provider's presentingViewController is nil
-    var presentingViewController: () async -> (PlatformViewController?) { get nonmutating set }
+    var presentingViewController: @MainActor () -> (PlatformViewController?) { get nonmutating set }
 }
 
 /// A class providing Firebase authentication services.
@@ -87,7 +87,7 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
 
     private let auth: Auth
     public var user: FirebaseAuth.User? { auth.currentUser }
-    public var presentingViewController: () async -> (PlatformViewController?) = { nil }
+    public var presentingViewController: @MainActor () -> (PlatformViewController?) = { nil }
 
     public func signInAnonymously() async throws {
         try await auth.signInAnonymously()
@@ -99,7 +99,7 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
             provider.presentingViewController = await presentingViewController()
         }
 
-        return try await provider.authenticate(self)
+        return try await provider.authenticate(with: self)
     }
     
     /**

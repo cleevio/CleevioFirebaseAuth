@@ -62,7 +62,7 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPr
         gidInstance.handle(url)
     }
 
-    public func authenticate(_ auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult {
+    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult {
         let credential = try await credential()
 
         do {
