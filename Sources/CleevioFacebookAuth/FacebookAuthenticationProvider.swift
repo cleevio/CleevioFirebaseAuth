@@ -61,7 +61,8 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                 viewController: presentingViewController,
                 configuration: .init(
                     permissions: permissions,
-                    tracking: tracking
+                    tracking: tracking,
+                    nonce: nonce
                 )
             ) { result in
                 switch result {
@@ -77,7 +78,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
                     continuation.resume(throwing: AuthenticatorError.permissionDeclined(declinedPermissions))
                 case let .success(granted: _, declined: _, token: token):
                     if let idToken = FBSDKLoginKit.AuthenticationToken.current?.tokenString {
-                        continuation.resume(returning: Credential(token: .access(idToken), nonce: nonce))
+                        continuation.resume(returning: Credential(token: .id(idToken), nonce: nonce))
                     } else if let accessToken = token?.tokenString {
                         continuation.resume(returning: Credential(token: .access(accessToken), nonce: nonce))
                     } else {
