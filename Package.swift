@@ -24,14 +24,14 @@ let package = Package(
             name: "CleevioFirebaseAuth",
             targets: ["CleevioFirebaseAuth"]),
         .library(
-            name: "CleevioFirebaseAuthCleevioAuthentication",
-            targets: ["CleevioFirebaseAuthCleevioAuthentication"]),
+            name: "RouterBytesFirebaseAuth",
+            targets: ["RouterBytesFirebaseAuth"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-algorithms", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://github.com/google/GoogleSignIn-iOS", .upToNextMajor(from: "7.0.0")),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "10.3.0")),
-        .package(url: "git@gitlab.cleevio.cz:cleevio-dev-ios/cleevioapi.git", "0.4.1-dev1"..<"0.8.0")
+        .package(url: "https://github.com/cleevio/RouterBytes.git", "0.4.1-dev1"..<"0.9.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -45,11 +45,10 @@ let package = Package(
             ],
             swiftSettings: swiftSettings),
         .target(
-            name: "CleevioFirebaseAuthCleevioAuthentication",
+            name: "RouterBytesFirebaseAuth",
             dependencies: [
                 "CleevioFirebaseAuth",
-               .product(name: "CleevioAPI", package: "cleevioapi"),
-               .product(name: "CleevioAuthentication", package: "cleevioapi"),
+                .product(name: "RouterBytesAuthentication", package: "routerbytes")
             ],
             swiftSettings: swiftSettings),
         .testTarget(
