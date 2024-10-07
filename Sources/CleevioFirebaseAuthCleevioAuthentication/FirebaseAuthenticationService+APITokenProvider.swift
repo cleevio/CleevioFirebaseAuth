@@ -1,8 +1,8 @@
 import Foundation
-import CleevioAuthentication
+import RouterBytesAuthentication
 import CleevioFirebaseAuth
 
-extension FirebaseAuthenticationService: CleevioAuthentication.APITokenProvider {
+extension FirebaseAuthenticationService: RouterBytesAuthentication.APITokenProvider {
     /// Retrieves the API token associated with the currently logged-in user.
     /// - Returns: A string representing the API token.
     /// - Throws: `NotLoggedInError` if the user is not logged in.

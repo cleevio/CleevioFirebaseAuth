@@ -87,15 +87,17 @@ let package = Package(
             name: "CleevioFirebaseAuthCleevioAuthentication",
             dependencies: [
                 .target(name: "CleevioFirebaseAuth"),
-                .product(name: "CleevioAPI", package: "cleevioapi"),
-                .product(name: "CleevioAuthentication", package: "cleevioapi"),
+                .product(name: "RouterBytes", package: "RouterBytes"),
+                .product(name: "RouterBytesAuthentication", package: "RouterBytes"),
             ],
-            swiftSettings: swiftSettings),
+            swiftSettings: swiftSettings
+        ),
         .testTarget(
             name: "CleevioFirebaseAuthTests",
             dependencies: [
                 "CleevioFirebaseAuth"
             ],
-            swiftSettings: swiftSettings)
+            swiftSettings: swiftSettings
+        )
     ]
 )
