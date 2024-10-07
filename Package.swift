@@ -44,7 +44,7 @@ let package = Package(
         .package(url: "https://github.com/google/GoogleSignIn-iOS", .upToNextMajor(from: "7.1.0")),
         .package(url: "https://github.com/facebook/facebook-ios-sdk", .upToNextMajor(from: "17.0.0")),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "10.0.0")),
-        .package(url: "git@gitlab.cleevio.cz:cleevio-dev-ios/cleevioapi.git", "0.4.1-dev1"..<"0.6.0")
+        .package(url: "https://github.com/cleevio/RouterBytes", .upToNextMajor(from: "0.8.0"))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
