@@ -11,21 +11,33 @@ public struct AuthenticationResult {
         public let fullName: PersonNameComponents?
         public let email: String?
 
-        package init(
-            fullName: PersonNameComponents? = nil,
-            email: String? = nil
-        ) {
+        public init(fullName: PersonNameComponents?, email: String?) {
             self.fullName = fullName
             self.email = email
         }
     }
 
-    public let firebaseAuthResult: AuthDataResult
+    public let isAnonymous: Bool
+    public let isEmailVerified: Bool
+    public let isNewUser: Bool
     public let userData: UserData?
 
-    package init(firebaseAuthResult: AuthDataResult, userData: UserData?) {
-        self.firebaseAuthResult = firebaseAuthResult
+    public init(isAnonymous: Bool, isEmailVerified: Bool, isNewUser: Bool, userData: UserData?) {
+        self.isAnonymous = isAnonymous
+        self.isEmailVerified = isEmailVerified
+        self.isNewUser = isNewUser
         self.userData = userData
+    }
+}
+
+extension AuthenticationResult {
+    package init (firebaseAuthResult: AuthDataResult, userData: UserData?) {
+        self.init(
+            isAnonymous: firebaseAuthResult.user.isAnonymous,
+            isEmailVerified: firebaseAuthResult.user.isEmailVerified,
+            isNewUser: firebaseAuthResult.additionalUserInfo?.isNewUser != false,
+            userData: userData
+        )
     }
 }
 
