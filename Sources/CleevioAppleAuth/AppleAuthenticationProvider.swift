@@ -12,21 +12,11 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
         public var idToken: String
         /// The authorization code obtained from Apple authentication.
         public var authCode: String
+        public var email: String?
         /// The full name associated with the authenticated Apple account.
         public var fullName: PersonNameComponents?
         /// A nonce value used to enhance security.
         public var nonce: String?
-
-        @inlinable
-        public init(idToken: String,
-                    authCode: String,
-                    fullName: PersonNameComponents?,
-                    nonce: String? = nil) {
-            self.idToken = idToken
-            self.authCode = authCode
-            self.fullName = fullName
-            self.nonce = nonce
-        }
     }
 
     /// Possible errors during Apple authentication.
@@ -48,7 +38,7 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
         request.nonce = sha256(nonce)
 
         let authorizationController = ASAuthorizationController(authorizationRequests: [request])
-        let authorizationDelegate = AppleAuthorizationDelegate(controller: authorizationController)
+        let authorizationDelegate = await AppleAuthorizationDelegate(controller: authorizationController)
         var continuationResumed = false
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -69,18 +59,24 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
         }
     }
 
-    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult {
+    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
         let credential = try await credential()
+        let firebaseAuthResult: AuthDataResult
 
         do {
-            return try await auth.signIn(with: credential.firebaseCredential, link: true)
+            firebaseAuthResult = try await auth.signIn(with: credential.firebaseCredential, link: true)
         } catch
             let error as AuthErrorCode where 
                 error.code == .credentialAlreadyInUse ||
                 error.code == .missingOrInvalidNonce {
             let updatedCredential = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
-            return try await auth.signIn(with: updatedCredential ?? credential.firebaseCredential, link: false)
+            firebaseAuthResult = try await auth.signIn(with: updatedCredential ?? credential.firebaseCredential, link: false)
         }
+
+        return AuthenticationResult(
+            firebaseAuthResult: firebaseAuthResult,
+            userData: AuthenticationResult.UserData(fullName: credential.fullName, email: nil)
+        )
     }
   
     /// A private delegate class for handling Apple authorization.
@@ -102,8 +98,13 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
                 let appleAuthCode = appleIDCredential.authorizationCode,
                 let authCode = String(data: appleAuthCode, encoding: .utf8)
             else { return completion(.failure(AuthenticatorError.authCodeNotFound)) }
-            
-            completion(.success(Credential(idToken: idToken, authCode: authCode, fullName: appleIDCredential.fullName)))
+
+            completion(.success(Credential(
+                idToken: idToken,
+                authCode: authCode,
+                email: appleIDCredential.email,
+                fullName: appleIDCredential.fullName
+            )))
         }
         
         func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {

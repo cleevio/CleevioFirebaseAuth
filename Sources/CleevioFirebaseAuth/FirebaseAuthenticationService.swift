@@ -6,16 +6,39 @@ public protocol FirebaseCredentialProvider {
     var firebaseCredential: AuthCredential { get }
 }
 
+public struct AuthenticationResult {
+    public struct UserData {
+        public let fullName: PersonNameComponents?
+        public let email: String?
+
+        package init(
+            fullName: PersonNameComponents? = nil,
+            email: String? = nil
+        ) {
+            self.fullName = fullName
+            self.email = email
+        }
+    }
+
+    public let firebaseAuthResult: AuthDataResult
+    public let userData: UserData?
+
+    package init(firebaseAuthResult: AuthDataResult, userData: UserData?) {
+        self.firebaseAuthResult = firebaseAuthResult
+        self.userData = userData
+    }
+}
+
 /// A protocol for authentication providers.
 public protocol AuthenticationProvider {
     /// The associated type of credentials.
     associatedtype Credential
-    
+
     /// Retrieve the authentication credential asynchronously.
     /// - Returns: An instance of `Credential`.
     func credential() async throws -> Credential
 
-    func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult
+    func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult
 }
 
 /// A protocol for authentication providers providing Firebase credentials.
@@ -41,7 +64,7 @@ public protocol FirebaseAuthenticationServiceType {
     /// If sign in fails and provider is PasswordAuthenticationProvider, user is created calling signUp(withEmail:password) depending on PasswordAuthenticationProvider.SignInOptions
     /// - Parameter provider: An authentication provider.
     @discardableResult
-    func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthDataResult where Provider.Credential: FirebaseCredentialProvider
+    func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthenticationResult where Provider.Credential: FirebaseCredentialProvider
 
     func signIn(with credential: AuthCredential, link: Bool) async throws -> AuthDataResult
 
@@ -94,7 +117,7 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
     }
     
     @discardableResult
-    public func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthDataResult where Provider.Credential: FirebaseCredentialProvider {
+    public func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthenticationResult where Provider.Credential: FirebaseCredentialProvider {
         if let provider = provider as? NeedsPresentingViewController, provider.presentingViewController == nil {
             provider.presentingViewController = await presentingViewController()
         }

@@ -61,17 +61,23 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
         Credential(email: email, password: password)
     }
 
-    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthDataResult {
+    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
         let credential = try await credential()
+        let firebaseAuthResult: AuthDataResult
 
         do {
             let link = options.contains(.tryLinkOnSignIn)
-            return try await auth.signIn(with: credential.firebaseCredential, link: link)
+            firebaseAuthResult = try await auth.signIn(with: credential.firebaseCredential, link: link)
         } catch let error as AuthErrorCode where
             error.code == .userNotFound && options.contains(.signUpOnUserNotFound) ||
             options.contains(.signUpOnAnyError) {
-            return try await auth.signUp(withEmail: credential.email, password: credential.password)
+            firebaseAuthResult = try await auth.signUp(withEmail: credential.email, password: credential.password)
         }
+
+        return AuthenticationResult(
+            firebaseAuthResult: firebaseAuthResult,
+            userData: AuthenticationResult.UserData(email: credential.email)
+        )
     }
 }
 
