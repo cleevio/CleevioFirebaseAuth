@@ -11,7 +11,10 @@ public struct AuthenticationResult {
         public let fullName: PersonNameComponents?
         public let email: String?
 
-        public init(fullName: PersonNameComponents?, email: String?) {
+        public init(
+            fullName: PersonNameComponents? = nil,
+            email: String? = nil
+        ) {
             self.fullName = fullName
             self.email = email
         }
@@ -22,7 +25,12 @@ public struct AuthenticationResult {
     public let isNewUser: Bool
     public let userData: UserData?
 
-    public init(isAnonymous: Bool, isEmailVerified: Bool, isNewUser: Bool, userData: UserData?) {
+    public init(
+        isAnonymous: Bool,
+        isEmailVerified: Bool,
+        isNewUser: Bool,
+        userData: UserData?
+    ) {
         self.isAnonymous = isAnonymous
         self.isEmailVerified = isEmailVerified
         self.isNewUser = isNewUser
