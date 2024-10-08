@@ -26,10 +26,10 @@ public struct AuthenticationResult {
     public let userData: UserData?
 
     public init(
-        isAnonymous: Bool,
-        isEmailVerified: Bool,
-        isNewUser: Bool,
-        userData: UserData?
+        isAnonymous: Bool = false,
+        isEmailVerified: Bool = false,
+        isNewUser: Bool = false,
+        userData: UserData? = nil
     ) {
         self.isAnonymous = isAnonymous
         self.isEmailVerified = isEmailVerified
