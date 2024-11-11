@@ -97,7 +97,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
     /// - Parameter auth: The Firebase authentication service used to perform the sign-in.
     /// - Returns: An `AuthDataResult` representing the result of the Firebase authentication.
     /// - Throws: An error if authentication fails.
-    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
+    public func authenticate(with auth: some FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
         let credential = try await credential()
         let firebaseAuthResult: AuthDataResult
 
