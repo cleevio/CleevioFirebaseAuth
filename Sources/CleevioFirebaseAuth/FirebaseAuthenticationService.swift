@@ -1,10 +1,3 @@
-//
-//  FirebaseAuthenticationService.swift
-//  
-//
-//  Created by Lukáš Valenta on 19.08.2023.
-//
-
 import Foundation
 import FirebaseAuth
 
@@ -13,14 +6,59 @@ public protocol FirebaseCredentialProvider {
     var firebaseCredential: AuthCredential { get }
 }
 
+public struct AuthenticationResult {
+    public struct UserData {
+        public let fullName: PersonNameComponents?
+        public let email: String?
+
+        public init(
+            fullName: PersonNameComponents? = nil,
+            email: String? = nil
+        ) {
+            self.fullName = fullName
+            self.email = email
+        }
+    }
+
+    public let isAnonymous: Bool
+    public let isEmailVerified: Bool
+    public let isNewUser: Bool
+    public let userData: UserData?
+
+    public init(
+        isAnonymous: Bool = false,
+        isEmailVerified: Bool = false,
+        isNewUser: Bool = false,
+        userData: UserData? = nil
+    ) {
+        self.isAnonymous = isAnonymous
+        self.isEmailVerified = isEmailVerified
+        self.isNewUser = isNewUser
+        self.userData = userData
+    }
+}
+
+extension AuthenticationResult {
+    package init (firebaseAuthResult: AuthDataResult, userData: UserData?) {
+        self.init(
+            isAnonymous: firebaseAuthResult.user.isAnonymous,
+            isEmailVerified: firebaseAuthResult.user.isEmailVerified,
+            isNewUser: firebaseAuthResult.additionalUserInfo?.isNewUser != false,
+            userData: userData
+        )
+    }
+}
+
 /// A protocol for authentication providers.
 public protocol AuthenticationProvider {
     /// The associated type of credentials.
     associatedtype Credential
-    
+
     /// Retrieve the authentication credential asynchronously.
     /// - Returns: An instance of `Credential`.
     func credential() async throws -> Credential
+
+    func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult
 }
 
 /// A protocol for authentication providers providing Firebase credentials.
@@ -46,7 +84,9 @@ public protocol FirebaseAuthenticationServiceType {
     /// If sign in fails and provider is PasswordAuthenticationProvider, user is created calling signUp(withEmail:password) depending on PasswordAuthenticationProvider.SignInOptions
     /// - Parameter provider: An authentication provider.
     @discardableResult
-    func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> (Provider.Credential, AuthDataResult) where Provider.Credential: FirebaseCredentialProvider
+    func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthenticationResult where Provider.Credential: FirebaseCredentialProvider
+
+    func signIn(with credential: AuthCredential, link: Bool) async throws -> AuthDataResult
 
     /// Sign out the current user.
     func signOut() async throws
@@ -59,7 +99,7 @@ public protocol FirebaseAuthenticationServiceType {
     func verifyPasswordResetCode(for email: String, code: String) async throws
 
     /// Changes user password using code (such as code user received via request to reset password)
-    func changePassword(for email: String, withCode code: String, newPassword password: String) async throws
+    func changePassword(withCode code: String, newPassword password: String) async throws
 
     /// Requests Firebase to send user e-mail with reset password
     func requestResetPassword(for email: String) async throws
@@ -77,7 +117,7 @@ public protocol FirebaseAuthenticationServiceType {
     var user: FirebaseAuth.User? { get }
 
     /// Used by signIn method that sets presentingViewController on AuthenticationProvider conforming to NeedsPresentingViewController if the provider's presentingViewController is nil
-    var presentingViewController: () -> (PlatformViewController?) { get nonmutating set }
+    var presentingViewController: @MainActor () -> (PlatformViewController?) { get nonmutating set }
 }
 
 /// A class providing Firebase authentication services.
@@ -90,43 +130,19 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
 
     private let auth: Auth
     public var user: FirebaseAuth.User? { auth.currentUser }
-    public var presentingViewController: () -> (PlatformViewController?) = { nil }
-    
+    public var presentingViewController: @MainActor () -> (PlatformViewController?) = { nil }
+
     public func signInAnonymously() async throws {
         try await auth.signInAnonymously()
     }
     
     @discardableResult
-    public func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> (Provider.Credential, AuthDataResult) where Provider.Credential: FirebaseCredentialProvider {
+    public func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthenticationResult where Provider.Credential: FirebaseCredentialProvider {
         if let provider = provider as? NeedsPresentingViewController, provider.presentingViewController == nil {
-            provider.presentingViewController = presentingViewController()
+            provider.presentingViewController = await presentingViewController()
         }
 
-        func handleErrorCode(error: AuthErrorCode, credential: Provider.Credential) async throws -> AuthDataResult {
-            if 
-                let provider = provider as? PasswordAuthenticationProvider,
-                let credential = credential as? PasswordAuthenticationProvider.Credential {
-                
-                if
-                    provider.options.contains(.signUpOnAnyError) ||
-                    error.code == AuthErrorCode.userNotFound && provider.options.contains(.signUpOnUserNotFound)
-                     {
-                    return try await signUp(withEmail: credential.email, password: credential.password)
-                }
-            }
-
-            throw error
-        }
-
-        let credential = try await provider.credential()
-
-        do {
-            return (credential, try await signIn(with: credential.firebaseCredential))
-        } catch let error as AuthErrorCode where error.code == AuthErrorCode.operationNotAllowed {
-            return (credential, try await signIn(with: credential.firebaseCredential, link: false))
-        } catch let error as AuthErrorCode {
-            return (credential, try await handleErrorCode(error: error, credential: credential))
-        }
+        return try await provider.authenticate(with: self)
     }
     
     /**
@@ -168,7 +184,7 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
         try await auth.verifyPasswordResetCode(code)
     }
 
-    public func changePassword(for email: String, withCode code: String, newPassword password: String) async throws {
+    public func changePassword(withCode code: String, newPassword password: String) async throws {
         try await auth.confirmPasswordReset(withCode: code, newPassword: password)
     }
 

@@ -1,23 +1,8 @@
-//
-//  GoogleAuthenticationProvider.swift
-//  
-//
-//  Created by Lukáš Valenta on 19.08.2023.
-//
-
+import CleevioFirebaseAuth
+import FirebaseCore
+import FirebaseAuth
 import Foundation
 import GoogleSignIn
-import Firebase
-
-import GoogleSignIn
-
-#if os(iOS)
-import UIKit
-public typealias PlatformViewController = UIViewController
-#elseif os(macOS)
-import AppKit
-public typealias PlatformViewController = NSWindow
-#endif
 
 /// A class providing Google authentication services conforming to `AuthenticationProvider`.
 public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPresentingViewController {
@@ -27,12 +12,8 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPr
         public var idToken: String
         /// The access token obtained from Google authentication.
         public var accessToken: String
-
-        @inlinable
-        public init(idToken: String, accessToken: String) {
-            self.idToken = idToken
-            self.accessToken = accessToken
-        }
+        public var email: String?
+        public var fullName: PersonNameComponents?
     }
 
     /// Possible errors during Google authentication.
@@ -66,15 +47,44 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPr
         
         let signInResult = try await Self.gidInstance.signIn(withPresenting: presentingViewController)
         let user = signInResult.user
-        
+
         guard let idToken = user.idToken?.tokenString else { throw AuthenticatorError.idTokenNotFound }
-        
-        return Credential(idToken: idToken, accessToken: user.accessToken.tokenString)
+
+        var fullName = PersonNameComponents()
+        fullName.familyName = user.profile?.familyName
+        fullName.givenName = user.profile?.givenName
+        fullName.nickname = user.profile?.name
+        return Credential(
+            idToken: idToken,
+            accessToken: user.accessToken.tokenString,
+            email: user.profile?.email,
+            fullName: fullName
+        )
     }
 
     /// Handles sign in URL to notify the GID instance of login success
     public static func handleSignInURL(_ url: URL) -> Bool {
         gidInstance.handle(url)
+    }
+
+    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
+        let credential = try await credential()
+        let firebaseAuthResult: AuthDataResult
+
+        do {
+            firebaseAuthResult = try await auth.signIn(with: credential.firebaseCredential, link: true)
+        } catch let error as AuthErrorCode where error.code == .credentialAlreadyInUse {
+            let updatedCredentials = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
+            firebaseAuthResult = try await auth.signIn(
+                with: updatedCredentials ?? credential.firebaseCredential,
+                link: false
+            )
+        }
+
+        return AuthenticationResult(
+            firebaseAuthResult: firebaseAuthResult,
+            userData: nil
+        )
     }
 }
 

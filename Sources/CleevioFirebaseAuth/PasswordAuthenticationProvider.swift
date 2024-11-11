@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import Firebase
+import FirebaseAuth
 
 /// A struct representing the credential for password-based authentication.
 public struct PasswordAuthenticationProvider: AuthenticationProvider {
@@ -31,11 +31,12 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
         }
 
         public static let signUpOnUserNotFound = Self(rawValue: 1 << 0)
-
         /// Needed with enumeration protection turned on as Firebase returns different errors at random (such as AuthErrorCode.internalError or AuthErrorCode.invalidCredential) so that attacker cannot determine if user exists
         /// Firebase changes the error codes in runtime on their BE so it could break signup in production
         /// More information: https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection#overview
         public static let signUpOnAnyError = Self(rawValue: 1 << 1)
+        /// When signing in try to link the existing account to the provided credentials
+        public static let tryLinkOnSignIn = Self(rawValue: 1 << 2)
     }
     
     public let email: String
@@ -58,6 +59,25 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
     @inlinable
     public func credential() async throws -> Credential {
         Credential(email: email, password: password)
+    }
+
+    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
+        let credential = try await credential()
+        let firebaseAuthResult: AuthDataResult
+
+        do {
+            let link = options.contains(.tryLinkOnSignIn)
+            firebaseAuthResult = try await auth.signIn(with: credential.firebaseCredential, link: link)
+        } catch let error as AuthErrorCode where
+            error.code == .userNotFound && options.contains(.signUpOnUserNotFound) ||
+            options.contains(.signUpOnAnyError) {
+            firebaseAuthResult = try await auth.signUp(withEmail: credential.email, password: credential.password)
+        }
+
+        return AuthenticationResult(
+            firebaseAuthResult: firebaseAuthResult,
+            userData: AuthenticationResult.UserData(email: credential.email)
+        )
     }
 }
 
