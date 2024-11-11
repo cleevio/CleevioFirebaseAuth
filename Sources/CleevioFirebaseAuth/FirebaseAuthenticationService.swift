@@ -2,12 +2,12 @@ import Foundation
 import FirebaseAuth
 
 /// A protocol for providing Firebase credentials.
-public protocol FirebaseCredentialProvider {
+public protocol FirebaseCredentialProvider: Sendable {
     var firebaseCredential: AuthCredential { get }
 }
 
-public struct AuthenticationResult {
-    public struct UserData {
+public struct AuthenticationResult: Sendable, Codable, Hashable {
+    public struct UserData: Sendable, Codable, Hashable {
         public let fullName: PersonNameComponents?
         public let email: String?
 
@@ -50,7 +50,7 @@ extension AuthenticationResult {
 }
 
 /// A protocol for authentication providers.
-public protocol AuthenticationProvider {
+public protocol AuthenticationProvider: Sendable {
     /// The associated type of credentials.
     associatedtype Credential
 
@@ -58,19 +58,20 @@ public protocol AuthenticationProvider {
     /// - Returns: An instance of `Credential`.
     func credential() async throws -> Credential
 
-    func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult
+    func authenticate(with auth: some FirebaseAuthenticationServiceType) async throws -> AuthenticationResult
 }
 
 /// A protocol for authentication providers providing Firebase credentials.
 public protocol FirebaseAuthenticationProvider: AuthenticationProvider where Credential: FirebaseCredentialProvider { }
 
 /// A protocol for types that need to have presentingViewController set.
-public protocol NeedsPresentingViewController {
+public protocol NeedsPresentingViewController: Sendable {
+    @MainActor
     var presentingViewController: PlatformViewController? { get nonmutating set}
 }
 
 /// A protocol defining the interface for Firebase authentication services.
-public protocol FirebaseAuthenticationServiceType {
+public protocol FirebaseAuthenticationServiceType: Sendable {
     /// Sign in anonymously.
     func signInAnonymously() async throws
 
@@ -121,7 +122,7 @@ public protocol FirebaseAuthenticationServiceType {
 }
 
 /// A class providing Firebase authentication services.
-open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
+open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType, @unchecked Sendable {
     /// Initialize the authentication service with an optional tenant ID.
     /// - Parameter tenantID: An optional tenant ID to associate with the service.
     public init(auth: Auth = Auth.auth()) { 
@@ -130,6 +131,7 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
 
     private let auth: Auth
     public var user: FirebaseAuth.User? { auth.currentUser }
+    @MainActor
     public var presentingViewController: @MainActor () -> (PlatformViewController?) = { nil }
 
     public func signInAnonymously() async throws {
@@ -138,8 +140,11 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType {
     
     @discardableResult
     public func signIn<Provider: AuthenticationProvider>(with provider: Provider) async throws -> AuthenticationResult where Provider.Credential: FirebaseCredentialProvider {
-        if let provider = provider as? NeedsPresentingViewController, provider.presentingViewController == nil {
-            provider.presentingViewController = await presentingViewController()
+        if let provider = provider as? NeedsPresentingViewController, await provider.presentingViewController == nil {
+            let viewController = await presentingViewController()
+            await MainActor.run {
+                provider.presentingViewController = viewController
+            }
         }
 
         return try await provider.authenticate(with: self)

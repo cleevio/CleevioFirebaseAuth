@@ -7,7 +7,7 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
     public init() { }
 
     /// The authentication credential structure for Apple authentication.
-    public struct Credential {
+    public struct Credential: Sendable, Hashable, Codable {
         /// The ID token obtained from Apple authentication.
         public var idToken: String
         /// The authorization code obtained from Apple authentication.
@@ -20,7 +20,7 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
     }
 
     /// Possible errors during Apple authentication.
-    public enum AuthenticatorError: Error {
+    public enum AuthenticatorError: Error, Sendable, Hashable, Codable {
         case appleIDCredentialNotFound
         case identityTokenNotFound
         case authCodeNotFound
@@ -59,7 +59,7 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
         }
     }
 
-    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
+    public func authenticate(with auth: some FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
         let credential = try await credential()
         let firebaseAuthResult: AuthDataResult
 

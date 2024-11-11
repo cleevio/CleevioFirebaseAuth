@@ -1,5 +1,5 @@
 import CleevioFirebaseAuth
-import FBSDKLoginKit
+@preconcurrency import FBSDKLoginKit
 import FirebaseAuth
 import Foundation
 
@@ -8,8 +8,8 @@ import Foundation
 /// process of obtaining a Facebook access token and uses it to authenticate with Firebase.
 public final class FacebookAuthenticationProvider: AuthenticationProvider, NeedsPresentingViewController {
     /// `Credential` struct stores the access token obtained from Facebook.
-    public struct Credential {
-        enum Token {
+    public struct Credential: Sendable, Hashable, Codable {
+        enum Token: Sendable, Hashable, Codable {
             case access(String)
             case id(String)
         }
@@ -19,7 +19,7 @@ public final class FacebookAuthenticationProvider: AuthenticationProvider, Needs
 
     /// `AuthenticatorError` enum defines the various errors that can occur during the
     /// Facebook authentication process.
-    public enum AuthenticatorError: Error {
+    public enum AuthenticatorError: Error, Sendable, Hashable {
         /// Error when the user cancels the authentication process.
         case authenticationCancelled
         /// Error when the user declines one or more requested permissions.

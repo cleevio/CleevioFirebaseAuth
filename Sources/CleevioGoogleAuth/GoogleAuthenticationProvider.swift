@@ -7,7 +7,7 @@ import GoogleSignIn
 /// A class providing Google authentication services conforming to `AuthenticationProvider`.
 public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPresentingViewController {
     /// The authentication credential structure for Google authentication.
-    public struct Credential {
+    public struct Credential: Sendable, Hashable  {
         /// The ID token obtained from Google authentication.
         public var idToken: String
         /// The access token obtained from Google authentication.
@@ -17,7 +17,7 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPr
     }
 
     /// Possible errors during Google authentication.
-    public enum AuthenticatorError: Error {
+    public enum AuthenticatorError: Error, Sendable, Hashable {
         case firebaseClientIDNotFound
         case presentingViewControllerNotProvided
         case idTokenNotFound
@@ -26,6 +26,7 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPr
     static let gidInstance = GIDSignIn.sharedInstance
     
     /// The view controller used for presenting Google authentication UI.
+    @MainActor
     public weak var presentingViewController: PlatformViewController?
 
     /// Initializes a `GoogleAuthenticationProvider` with a presenting view controller.
@@ -67,7 +68,7 @@ public final class GoogleAuthenticationProvider: AuthenticationProvider, NeedsPr
         gidInstance.handle(url)
     }
 
-    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
+    public func authenticate(with auth: some FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
         let credential = try await credential()
         let firebaseAuthResult: AuthDataResult
 

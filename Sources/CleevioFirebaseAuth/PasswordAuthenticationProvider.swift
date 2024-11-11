@@ -11,7 +11,7 @@ import FirebaseAuth
 /// A struct representing the credential for password-based authentication.
 public struct PasswordAuthenticationProvider: AuthenticationProvider {
     /// The credential structure containing email and password.
-    public struct Credential {
+    public struct Credential: Sendable, Hashable, Codable {
         public var email: String
         public var password: String
 
@@ -22,7 +22,7 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
         }
     }
 
-    public struct SignInOptions: OptionSet {
+    public struct SignInOptions: OptionSet, Sendable, Hashable, Codable {
         public let rawValue: UInt
 
         @inlinable
@@ -61,7 +61,7 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
         Credential(email: email, password: password)
     }
 
-    public func authenticate(with auth: FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
+    public func authenticate(with auth: some FirebaseAuthenticationServiceType) async throws -> AuthenticationResult {
         let credential = try await credential()
         let firebaseAuthResult: AuthDataResult
 

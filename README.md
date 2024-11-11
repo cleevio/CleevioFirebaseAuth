@@ -5,8 +5,9 @@
 
 # CleevioFirebaseAuth
 
-Firebase authentication service. Also contains extension for [RouterBytesAuthentication.APITokenProvider](https://github.com/cleevio/RouterBytes.git)
-CleevioFirebaseAuth is a Swift package that provides a set of libraries for integrating various authentication providers with Firebase. This package supports authentication via Apple, Google, and Facebook, making it easier to manage user authentication in your iOS and macOS applications.
+CleevioFirebaseAuth is a Swift package that provides a set of libraries for integrating various authentication providers with Firebase. This package supports authentication via Apple, Google, and Facebook, making it easier to manage user authentication in your iOS and macOS applications.) 
+Contains extension for [RouterBytesAuthentication.APITokenProvider](https://github.com/cleevio/RouterBytes.git)
+
 ## License
 
 ## Features
