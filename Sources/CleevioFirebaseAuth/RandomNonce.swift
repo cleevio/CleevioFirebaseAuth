@@ -3,7 +3,11 @@ import CryptoKit
 
 /// Generates a random nonce string.
 public func randomNonceString() -> String {
-    return Data(AES.GCM.Nonce()).base64EncodedString()
+    // charset suggested in Firebase example https://firebase.google.com/docs/auth/ios/apple?authuser=0&hl=en#sign_in_with_apple_and_authenticate_with_firebase
+    let charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._"
+    let length = 16
+    let nonce = String((0..<length).compactMap { _ in charset.randomElement() })
+    return nonce
 }
 
 /// Generates a SHA-256 hash of the input string.
