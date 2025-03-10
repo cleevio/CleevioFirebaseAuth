@@ -131,7 +131,6 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType, @un
 
     private let auth: Auth
     public var user: FirebaseAuth.User? { auth.currentUser }
-    @MainActor
     public var presentingViewController: @MainActor () -> (PlatformViewController?) = { nil }
 
     public func signInAnonymously() async throws {
