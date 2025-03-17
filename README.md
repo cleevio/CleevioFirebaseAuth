@@ -31,8 +31,8 @@ To integrate `CleevioFirebaseAuth` into your Xcode project using Swift Package M
 ```swift
 dependencies: [
     .package(
-        url: "git@gitlab.cleevio.cz:cleevio-dev-ios/CleevioFirebaseAuth.git", 
-        .upToNextMajor(from: "0.2.0")
+        url: "https://github.com/cleevio/CleevioFirebaseAuth", 
+        .upToNextMajor(from: "2.0.0")
     )
 ]
 ```
