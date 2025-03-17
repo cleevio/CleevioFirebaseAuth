@@ -123,7 +123,7 @@ extension FacebookAuthenticationProvider.Credential: FirebaseCredentialProvider 
         switch token {
         case let .id(token):
             OAuthProvider.credential(
-                withProviderID: FacebookAuthProviderID,
+                providerID: .facebook,
                 idToken: token,
                 rawNonce: nonce
             )
