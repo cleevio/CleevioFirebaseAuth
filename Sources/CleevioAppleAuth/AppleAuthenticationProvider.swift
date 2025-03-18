@@ -36,9 +36,14 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
         
         let nonce = randomNonceString()
         request.nonce = sha256(nonce)
+        return try await appleCredential(request: request, nonce: nonce)
+    }
 
+    /// Wraps main actor isolated UI interactions.
+    @MainActor
+    private func appleCredential(request: ASAuthorizationAppleIDRequest, nonce: String) async throws -> Credential {
         let authorizationController = ASAuthorizationController(authorizationRequests: [request])
-        let authorizationDelegate = await AppleAuthorizationDelegate(controller: authorizationController)
+        let authorizationDelegate = AppleAuthorizationDelegate(controller: authorizationController)
         var continuationResumed = false
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -66,7 +71,7 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
         do {
             firebaseAuthResult = try await auth.signIn(with: credential.firebaseCredential, link: true)
         } catch let error as AuthErrorCode where error.code == .missingOrInvalidNonce {
-            let updatedCredential = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
+            let updatedCredential = (error as NSError).userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
             firebaseAuthResult = try await auth.signIn(with: updatedCredential ?? credential.firebaseCredential, link: false)
         }
 
