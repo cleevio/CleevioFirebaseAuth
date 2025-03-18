@@ -65,10 +65,7 @@ public final class AppleAuthenticationProvider: AuthenticationProvider {
 
         do {
             firebaseAuthResult = try await auth.signIn(with: credential.firebaseCredential, link: true)
-        } catch
-            let error as AuthErrorCode where 
-                error.code == .credentialAlreadyInUse ||
-                error.code == .missingOrInvalidNonce {
+        } catch let error as AuthErrorCode where error.code == .missingOrInvalidNonce {
             let updatedCredential = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
             firebaseAuthResult = try await auth.signIn(with: updatedCredential ?? credential.firebaseCredential, link: false)
         }

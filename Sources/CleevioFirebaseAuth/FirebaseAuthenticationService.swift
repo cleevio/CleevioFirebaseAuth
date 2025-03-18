@@ -131,7 +131,6 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType, @un
 
     private let auth: Auth
     public var user: FirebaseAuth.User? { auth.currentUser }
-    @MainActor
     public var presentingViewController: @MainActor () -> (PlatformViewController?) = { nil }
 
     public func signInAnonymously() async throws {
@@ -164,11 +163,18 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType, @un
      If the `link` parameter is set to `true` and there's a current user logged in, the provided `firebaseCredential` will be linked to the current user's account. Otherwise, the credential will be used for signing in.
      */
     @discardableResult
-    public func signIn(with firebaseCredential: AuthCredential, link: Bool = true) async throws -> AuthDataResult {
-        if let user, link {
-            return try await user.link(with: firebaseCredential)
-        } else {
+    public func signIn(with firebaseCredential: AuthCredential, link: Bool) async throws -> AuthDataResult {
+        guard let user, user.isAnonymous, link else {
             return try await auth.signIn(with: firebaseCredential)
+        }
+
+        do {
+            return try await user.link(with: firebaseCredential)
+        } catch let error as AuthErrorCode where error.code == .credentialAlreadyInUse {
+            let updatedCredential = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
+            return try await auth.signIn(with: updatedCredential ?? firebaseCredential)
+        } catch {
+            throw error
         }
     }
 
