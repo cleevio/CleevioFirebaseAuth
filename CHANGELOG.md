@@ -3,7 +3,6 @@
 ## [2.1.1] - 2025-03-26
 - Fixed typed error catching
 
-- 
 ## [2.1.0] - 2025-03-25
 - Upgraded Firebase dependency to v11
 - Fixed Sendability warnings in `AppleAuthenticationProvider`
