@@ -15,7 +15,7 @@ let swiftSettings: [SwiftSetting] = [
 let package = Package(
     name: "CleevioFirebaseAuth",
     platforms: [
-        .iOS(.v13),
+        .iOS(.v15),
         .macOS(.v10_15)
     ],
     products: [
@@ -43,7 +43,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-algorithms", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://github.com/google/GoogleSignIn-iOS", .upToNextMajor(from: "7.1.0")),
         .package(url: "https://github.com/facebook/facebook-ios-sdk", .upToNextMajor(from: "17.0.0")),
-        .package(url: "https://github.com/firebase/firebase-ios-sdk", .upToNextMajor(from: "11.0.0")),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk", .upToNextMajor(from: "12.0.0")),
         .package(url: "https://github.com/cleevio/RouterBytes", .upToNextMajor(from: "0.8.0"))
     ],
     targets: [
