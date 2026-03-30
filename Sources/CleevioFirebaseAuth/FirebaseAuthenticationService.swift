@@ -172,7 +172,9 @@ open class FirebaseAuthenticationService: FirebaseAuthenticationServiceType, @un
 
         do {
             return try await user.link(with: firebaseCredential)
-        } catch let error as NSError where error.code == AuthErrorCode.credentialAlreadyInUse.rawValue {
+        } catch let error as NSError where
+            error.code == AuthErrorCode.credentialAlreadyInUse.rawValue ||
+            error.code == AuthErrorCode.emailAlreadyInUse.rawValue {
             let updatedCredential = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential
             return try await auth.signIn(with: updatedCredential ?? firebaseCredential)
         } catch {
