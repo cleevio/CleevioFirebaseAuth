@@ -71,7 +71,13 @@ public struct PasswordAuthenticationProvider: AuthenticationProvider {
         } catch let error as AuthErrorCode where
             error.code == .userNotFound && options.contains(.signUpOnUserNotFound) ||
             options.contains(.signUpOnAnyError) {
-            firebaseAuthResult = try await auth.signUp(withEmail: credential.email, password: credential.password)
+            do {
+                firebaseAuthResult = try await auth.signUp(withEmail: credential.email, password: credential.password)
+            } catch let signUpError as AuthErrorCode where
+                        signUpError.code == .emailAlreadyInUse ||
+                        signUpError.code == .credentialAlreadyInUse {
+                firebaseAuthResult = try await auth.signIn(with: credential.firebaseCredential, link: false)
+            }
         }
 
         return AuthenticationResult(
